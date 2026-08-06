@@ -54,9 +54,9 @@ app/
 
 ## Convenciones del modelo de datos (del código actual — NO cambiarlas)
 
-- **PKs UUID** mediante el tipo **GUID portable** de `database.py` (hoy se persiste como
-  `CHAR(36)`, funciona en SQLite y SQL Server). En SQL Server se decidirá mantener
-  `CHAR(36)` o migrar a `UNIQUEIDENTIFIER`. `[[POR LLENAR: decisión del Frente 2]]`
+- **PKs UUID** mediante el tipo **GUID portable** de `database.py`, que persiste como
+  `CHAR(36)` en SQLite y `VARCHAR(36)` en SQL Server. **Resuelto (ADR-004):** se mantiene
+  portable; **no** se migra a `UNIQUEIDENTIFIER`. Los UUID se generan en la app (`new_uuid()`).
 - **Nombres snake_case en INGLÉS**, tal como el código (`net_amount`, `final_concept_id`,
   `supervisor_reviewed_by`, `proposed_payment_week`). **No traducir ni renombrar** campos
   existentes.
@@ -112,8 +112,11 @@ app/
 - `.env` con `DATABASE_URL=sqlite:///./monte_esmeralda.db` y tu `JWT_SECRET` propio.
 - Crear/actualizar BD: `alembic upgrade head`; sembrar: `python -m app.seed`.
 - Correr: `uvicorn app.main:app --reload`. Pruebas: `pytest`.
-- Para SQL Server (Frente 2) se usará pyodbc + ODBC Driver 18; las migraciones se aplican
-  contra AWS **solo tras revisarlas**.
+- **Para trabajar contra SQL Server:** instalar **ODBC Driver 18**, `pip install -r
+  requirements.txt`, y en `.env` poner `DB_BACKEND=sqlserver` con las credenciales (nunca
+  versionadas). El usuario de BD requiere permiso para crear el esquema
+  (`db_ddladmin` / `db_owner`) al correr migraciones. Las migraciones se aplican contra AWS
+  **solo tras revisarlas**.
 
 ## Calidad
 

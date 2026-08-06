@@ -57,11 +57,15 @@ Frontend (React/TS)  →  API (FastAPI routers)  →  Negocio (services)  →  D
 
 ### ADR-004 — PKs con tipo GUID portable
 - **Contexto:** se necesitan UUID como PK que funcionen igual en SQLite y SQL Server.
-- **Decisión:** usar el `TypeDecorator` GUID de `database.py`, que hoy persiste como
-  `CHAR(36)`. Para SQL Server queda pendiente decidir mantener `CHAR(36)` o migrar a
-  `UNIQUEIDENTIFIER`. `[[POR LLENAR: decisión del Frente 2]]`
-- **Consecuencias:** portabilidad entre motores; posible ajuste de tipo en la migración de
-  SQL Server.
+- **Decisión (resuelta en el Frente 2):** mantener el `TypeDecorator` GUID portable de
+  `database.py`, que persiste como `CHAR(36)` / `VARCHAR(36)`, **en lugar** del
+  `UNIQUEIDENTIFIER` nativo de SQL Server.
+- **Razón:** da portabilidad limpia entre SQLite (dev) y SQL Server (prod) con un mismo
+  modelo y un mismo juego de migraciones. Verificado creando el esquema real en RDS sin
+  problemas (ver ADR-010). El ahorro de bytes de `UNIQUEIDENTIFIER` (16 vs. 36) no justifica
+  romper esa portabilidad.
+- **Consecuencias:** los PKs son `VARCHAR(36)` en SQL Server; los UUID se generan en la
+  aplicación con `new_uuid()`, no en la base.
 
 ### ADR-005 — Máquina de estados centralizada en `workflow.py`
 - **Contexto:** la Solicitud de Pago transita por múltiples estados con reglas y permisos
@@ -115,13 +119,28 @@ Frontend (React/TS)  →  API (FastAPI routers)  →  Negocio (services)  →  D
   necesidad de un `ALTER` posterior. La migración inicial se regeneró con estos tipos
   (RDS aún estaba vacío, así que no se acumuló un ALTER).
 
+### ADR-010 — Esquema verificado contra AWS RDS (SQL Server)
+- **Contexto:** el soporte de SQL Server (ADR-003, ADR-009) se había validado solo generando
+  DDL en modo offline, sin conexión real. Faltaba confirmarlo contra la instancia de AWS.
+- **Decisión / hecho registrado:** el esquema se aplicó **con éxito** en la base
+  `MESistemaGestionPagos` (instancia `devapps`, región `us-west-2`) con
+  `alembic upgrade head` (revisión `657d9f17a604`): **8 tablas creadas**. El seed y la
+  autenticación (`POST /auth/login`) también quedaron verificados contra SQL Server.
+- **Consecuencias:** el Frente 2 queda cerrado; la configuración `DB_BACKEND=sqlserver` es
+  la ruta de producción validada. **Pendiente menor:** verificar el round-trip de texto con
+  acentos y ñ (`NVARCHAR`) desde la UI cuando el frontend esté disponible (Frente 3); hoy
+  está comprobado a nivel de tipos y de backend, no de punta a punta.
+
 ---
 
 ## Decisiones pendientes
 
-Ver la sección 14 del `CLAUDE.md` raíz. En síntesis: tipo del GUID en SQL Server; alcance y
-prioridad del Paquete 2; endurecimiento (validación de adjuntos, paginación, bloqueo duro
-por cumplimiento); estrategia de ambientes/despliegue.
+Ver la sección 14 del `CLAUDE.md` raíz. En síntesis: alcance y prioridad del Paquete 2;
+endurecimiento (validación de adjuntos, paginación, bloqueo duro por cumplimiento);
+estrategia de ambientes/despliegue.
+
+> El tipo del GUID en SQL Server ya **no** es un pendiente: se resolvió en el ADR-004
+> (se mantiene `VARCHAR(36)` portable).
 
 - **Docker (diferido):** `docker-compose.yml` aún levanta Postgres e inyecta una
   `DATABASE_URL` de Postgres, y el `Dockerfile` instala `libpq-dev` en vez del ODBC
