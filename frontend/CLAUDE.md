@@ -2,10 +2,12 @@
 
 > Reglas locales del frontend. Hereda y no contradice el `CLAUDE.md` raíz.
 >
-> **Estado:** este documento describe el **objetivo del Frente 3** — la reconstrucción del
-> frontend en el stack de GRC-OIR (Vite + PrimeReact + TanStack Query + RHF + Zod). Hasta
-> que esa migración aterrice, el frontend actual sigue en Next.js hecho a mano; estas reglas
-> aplican al frontend nuevo conforme se construye.
+> **Estado (Frente 3, en curso):** este proyecto ya es el frontend nuevo en el stack de
+> GRC-OIR (Vite + React + TS + PrimeReact + TanStack Query + RHF + Zod). Hoy contiene solo
+> el **andamiaje**: providers, router (`/login` y `/` con layout), estructura de carpetas y
+> los helpers portados en `src/shared/lib/` (`api.ts`, `types.ts`, `labels.ts`, `nav.ts`).
+> El frontend anterior en Next.js se conserva como referencia en `legacy-frontend/` y ya no
+> se desarrolla. Las pantallas se migran por incrementos siguiendo estas reglas.
 
 ## Stack (objetivo)
 
