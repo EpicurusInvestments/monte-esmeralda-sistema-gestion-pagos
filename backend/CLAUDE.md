@@ -12,7 +12,8 @@
 - Autenticación: **JWT (HS256)** con `python-jose`; contraseñas con **bcrypt**.
 - Base de datos:
   - **Local/dev:** SQLite (archivo `monte_esmeralda.db`).
-  - **Producción (Frente 2):** SQL Server en AWS RDS, driver **pyodbc (síncrono)** sobre
+  - **Producción (Frente 2 — ✅ verificado contra RDS, ADR-010):** SQL Server en AWS RDS,
+    driver **pyodbc (síncrono)** sobre
     **ODBC Driver 18 for SQL Server**. Los endpoints son `def` (sync); FastAPI los corre en
     threadpool. Ser consistente: no mezclar `async def` con acceso pyodbc síncrono.
 - Conexión por variables de entorno (ver `.env.example`), seleccionada con `DB_BACKEND`:
@@ -54,14 +55,18 @@ app/
 
 ## Convenciones del modelo de datos (del código actual — NO cambiarlas)
 
-- **PKs UUID** mediante el tipo **GUID portable** de `database.py` (hoy se persiste como
-  `CHAR(36)`, funciona en SQLite y SQL Server). En SQL Server se decidirá mantener
-  `CHAR(36)` o migrar a `UNIQUEIDENTIFIER`. `[[POR LLENAR: decisión del Frente 2]]`
+- **PKs UUID** mediante el tipo **GUID portable** de `database.py`, que persiste como
+  `CHAR(36)` en SQLite y `VARCHAR(36)` en SQL Server. **Resuelto (ADR-004):** se mantiene
+  portable; **no** se migra a `UNIQUEIDENTIFIER`. Los UUID se generan en la app (`new_uuid()`).
 - **Nombres snake_case en INGLÉS**, tal como el código (`net_amount`, `final_concept_id`,
   `supervisor_reviewed_by`, `proposed_payment_week`). **No traducir ni renombrar** campos
   existentes.
-- **Texto (SQL Server):** usar `NVARCHAR` (en SQLAlchemy, `Unicode`) para acentos/ñ en la
-  migración del Frente 2. `VARCHAR` en SQL Server no es UTF-8 por defecto.
+- **Texto (ADR-009):** `VARCHAR` en SQL Server no es UTF-8 por defecto, así que todo texto va
+  en Unicode. Corto: `Unicode(n)` (→ `NVARCHAR(n)`). Largo: el helper `unicode_text()` de
+  `database.py` (→ `NVARCHAR(MAX)`); **nunca** `UnicodeText` pelado, que produce el `NTEXT`
+  deprecado.
+- **Fechas (ADR-009):** fecha sola con `Date` (→ `DATE`); fecha/hora con el helper
+  `datetime2()` de `database.py` (→ `DATETIME2`), **nunca** `DateTime` pelado.
 - **Montos:** `Numeric`/`DECIMAL(14,2)`; en Python se opera con `Decimal`. **Nunca float**
   para dinero (ya se respeta en `workflow.py`).
 - **Enums:** un `str, enum.Enum` por dimensión en `enums.py` (fuente única). En SQL Server
@@ -112,8 +117,11 @@ app/
 - `.env` con `DATABASE_URL=sqlite:///./monte_esmeralda.db` y tu `JWT_SECRET` propio.
 - Crear/actualizar BD: `alembic upgrade head`; sembrar: `python -m app.seed`.
 - Correr: `uvicorn app.main:app --reload`. Pruebas: `pytest`.
-- Para SQL Server (Frente 2) se usará pyodbc + ODBC Driver 18; las migraciones se aplican
-  contra AWS **solo tras revisarlas**.
+- **Para trabajar contra SQL Server:** instalar **ODBC Driver 18**, `pip install -r
+  requirements.txt`, y en `.env` poner `DB_BACKEND=sqlserver` con las credenciales (nunca
+  versionadas). El usuario de BD requiere permiso para crear el esquema
+  (`db_ddladmin` / `db_owner`) al correr migraciones. Las migraciones se aplican contra AWS
+  **solo tras revisarlas**.
 
 ## Calidad
 

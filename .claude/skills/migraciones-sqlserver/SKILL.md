@@ -22,7 +22,11 @@ ambos. Por eso:
 
 - Usa **tipos genéricos de SQLAlchemy** (los del modelo), no tipos exclusivos del dialecto
   `mssql`. El tipo **GUID portable** de `database.py`, `Unicode`, `Numeric`, `Enum` de
-  SQLAlchemy, `Boolean`, `Date`, `DateTime` se renderizan correctamente en cada motor.
+  SQLAlchemy, `Boolean` y `Date` se renderizan correctamente en cada motor.
+- Cuando el tipo genérico **no** rinde bien en SQL Server, la portabilidad se resuelve con
+  `with_variant` encapsulado en un helper de `database.py` — no con ramas por dialecto en la
+  migración. Hoy hay dos (ver **ADR-009**): `datetime2()` para fecha/hora y `unicode_text()`
+  para texto largo. Úsalos en lugar de `DateTime` y `UnicodeText` pelados.
 - Solo usa ramas por dialecto (`if op.get_bind().dialect.name == "mssql": ...`) cuando sea
   estrictamente necesario, y documenta por qué.
 - El tipo `Enum` de SQLAlchemy ya produce `VARCHAR` + CHECK en ambos motores; no hace falta
@@ -41,19 +45,30 @@ ambos. Por eso:
    FKs, índices, CHECKs y que el `downgrade` revierta correctamente.
 4. Aplicar en dev (SQLite): `alembic upgrade head`; verificar que la app levanta y que
    `pytest` pasa.
-5. Para SQL Server: apuntar `DATABASE_URL` a la instancia RDS y `alembic upgrade head`
-   **solo después de revisar** (ver notas de AWS). En una instancia compartida, con
-   cuidado.
+5. Para SQL Server: poner `DB_BACKEND=sqlserver` en `.env` (con `DB_HOST`, `DB_NAME`,
+   `DB_USER`, `DB_PASSWORD`, etc.) y `alembic upgrade head` **solo después de revisar**
+   (ver notas de AWS). Alembic toma la URL de `settings.sqlalchemy_url`. En una instancia
+   compartida, con cuidado.
 
 ## Convenciones de esquema
 
-- **PK**: tipo GUID portable, generado en la app (`new_uuid()`), nombre `<entidad>_id` /
-  `id`. En SQL Server se decidirá `CHAR(36)` (lo actual) vs `UNIQUEIDENTIFIER`
-  `[[POR LLENAR: decisión del Frente 2]]`.
-- **Textos**: `Unicode(n)` (→ `NVARCHAR` en SQL Server) para acentos/ñ sin corromper.
-  Longitudes según el campo.
+- **PK**: el tipo **GUID portable** de `database.py`, que persiste como `CHAR(36)` /
+  `VARCHAR(36)` en ambos motores (decisión **ADR-004**: se mantiene por portabilidad
+  SQLite↔SQL Server; **NO** se usa `UNIQUEIDENTIFIER`). UUID generados en la app con
+  `new_uuid()`. Nombre `<entidad>_id` / `id`.
+- **Textos** (ver **ADR-009**: los datos son en español, así que todo texto va en Unicode):
+  - **Corto/acotado**: `Unicode(n)` → `NVARCHAR(n)` en SQL Server, `VARCHAR(n)` en SQLite.
+    Longitudes según el campo.
+  - **Largo**: el helper `unicode_text()` de `database.py` → `NVARCHAR(MAX)` en SQL Server,
+    `TEXT` en SQLite. **NO** usar `UnicodeText` pelado: en SQL Server produce `NTEXT`, que
+    Microsoft tiene **deprecado**.
 - **Dinero**: `Numeric(14, 2)` (→ `DECIMAL(14,2)`). Nunca `Float`.
-- **Booleanos**: `Boolean` (→ `BIT`). **Fechas**: `Date` / `DateTime`.
+- **Booleanos**: `Boolean` (→ `BIT`).
+- **Fechas** (ver **ADR-009**):
+  - **Fecha sola**: `Date` → `DATE`.
+  - **Fecha/hora**: el helper `datetime2()` de `database.py` → `DATETIME2` en SQL Server,
+    `DATETIME` en SQLite. **NO** usar `DateTime` pelado, que en SQL Server queda en el
+    `DATETIME` legado (menos rango y precisión).
 - **Estados**: `Enum(...)` de SQLAlchemy con los valores EXACTOS de `app/enums.py`. Ejemplo
   de los valores que deben quedar en el CHECK de `solicitudes.status`:
   ```
@@ -71,7 +86,10 @@ ambos. Por eso:
 
 ## AWS RDS (notas)
 
-- Conexión por `DATABASE_URL` en `.env` (`mssql+pyodbc://...`), endpoint
+- Conexión con `DB_BACKEND=sqlserver` en `.env`: `config.py` arma la URL `mssql+pyodbc`
+  vía `odbc_connect` a partir de `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`,
+  `DB_ENCRYPT`, `DB_TRUST_SERVER_CERTIFICATE` y `ODBC_DRIVER`. **No** hay un camino
+  `DATABASE_URL=mssql+pyodbc://...`: `DATABASE_URL` es solo la ruta SQLite de dev. Endpoint
   `devapps.cyd2zy4jjmkm.us-west-2.rds.amazonaws.com`, base `MESistemaGestionPagos`,
   puerto 1433, ODBC Driver 18, TLS (`Encrypt` / `TrustServerCertificate` según la
   instancia). **Credenciales solo en `.env` / Secrets Manager, nunca versionadas.**

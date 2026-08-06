@@ -77,7 +77,7 @@ Solicitud de Pago, esta pasa por revisión operativa (Supervisor) y aprobación 
 | Librería UI | **PrimeReact** | Misma que GRC-OIR (DataTable potente, patrón lista + panel de detalle). |
 | Datos/formularios (frontend) | **TanStack Query + React Hook Form + Zod** | Igual que GRC-OIR. |
 | Backend | **Python + FastAPI** | **Se mantiene intacto.** Pydantic v2, SQLAlchemy 2.x, Alembic. JWT (HS256) + bcrypt. |
-| Base de datos | **Local: SQLite** · **Producción: Microsoft SQL Server en AWS** | Driver de producción: **pyodbc** + ODBC Driver 18 (adaptación en Frente 2; hoy el código trae Postgres/psycopg2). Endpoint y credenciales solo por `.env`. |
+| Base de datos | **Local: SQLite** · **Producción: Microsoft SQL Server en AWS** | Driver de producción: **pyodbc** + ODBC Driver 18 (Frente 2 ✅ hecho y verificado contra RDS; Postgres/psycopg2 ya se retiró). Se elige con `DB_BACKEND` (`sqlite` \| `sqlserver`). Endpoint y credenciales solo por `.env`. |
 | Almacenamiento de adjuntos | Abstracción compatible con S3 (`services/storage.py`) | Local: disco (`uploads/`). Producción: bucket S3 (a futuro). |
 | Identidad | JWT propio (correo + contraseña, bcrypt) | NO usa SSO. RBAC por rol. |
 | Entorno local | Ejecución directa (venv + uvicorn / npm) | Hay `docker-compose.yml`, pero en local se trabaja con SQLite sin contenedor de BD. |
@@ -134,7 +134,7 @@ Frentes de trabajo (incrementales; cada uno deja el sistema en verde):
 | Frente | Descripción | Estado |
 |---|---|---|
 | **F1 — Higiene, versionado y arranque** | Renombrado, limpieza del baseline, JWT propio, repo en GitHub, arranque local verificado. | ✅ Hecho |
-| **F2 — Adaptación del backend a SQL Server** | Driver pyodbc + cadena `mssql+pyodbc`, tipo GUID, revisión de migración Alembic, prueba contra AWS. Local sigue en SQLite. | Pendiente |
+| **F2 — Adaptación del backend a SQL Server** | Driver pyodbc + cadena `mssql+pyodbc`, tipo GUID, revisión de migración Alembic, prueba contra AWS. Local sigue en SQLite. | ✅ Hecho |
 | **F3 — Migración del frontend** | Reconstruir el frontend en Vite + React + TS + PrimeReact + TanStack Query + RHF + Zod. Backend intacto. Reusa `api.ts`, `types.ts`, `labels.ts`, `nav.ts`. | Pendiente |
 | **F4 — Documentación y skills** | Adaptar `CLAUDE.md` (raíz/back/front) y skills de GRC-OIR; generar `docs/`. | En curso |
 | **F5 — Funcionalidad nueva (Paquete 2)** | Endurecimiento; tesorería/remesas; matriz de flujo de efectivo; reportería; fiscal (a futuro). | Pendiente |
@@ -158,8 +158,8 @@ Frentes de trabajo (incrementales; cada uno deja el sistema en verde):
 (entidad central), `attachments`, `comments`, `audit_events`.
 
 - **PKs:** UUID mediante un tipo GUID portable (`TypeDecorator`) que funciona en SQLite y
-  SQL Server. En SQL Server se resolverá como `UNIQUEIDENTIFIER` o `CHAR(36)`
-  (`[[POR LLENAR: decisión del Frente 2]]`).
+  SQL Server. **Resuelto (ADR-004):** se mantiene portable — `CHAR(36)` en SQLite,
+  `VARCHAR(36)` en SQL Server; **no** se usa `UNIQUEIDENTIFIER`.
 - **Nombres:** snake_case en inglés tal como el código actual (`net_amount`,
   `final_concept_id`, `supervisor_reviewed_by`). No traducir ni renombrar campos
   existentes.
@@ -281,12 +281,12 @@ documentación actualizada.
 
 ## 14. Decisiones pendientes (resolver con el equipo)
 
-- **Base SQL Server en AWS (Frente 2):** instancia RDS
+- **Base SQL Server en AWS (Frente 2 — ✅ verificado):** instancia RDS
   `devapps.cyd2zy4jjmkm.us-west-2.rds.amazonaws.com`, base `MESistemaGestionPagos`.
+  Esquema aplicado con `alembic upgrade head` (revisión `657d9f17a604`, 8 tablas), más seed
+  y `POST /auth/login` comprobados contra SQL Server. Ver ADR-010 en `docs/arquitectura.md`.
   **Usuario y contraseña van SOLO en `.env` local / AWS Secrets Manager — nunca en el
   repositorio ni en este archivo.**
-- **Tipo del GUID en SQL Server:** `UNIQUEIDENTIFIER` vs. `CHAR(36)`.
-  `[[POR LLENAR: decidir en el Frente 2]]`
 - **Alcance y prioridad del Paquete 2** (tesorería, remesas, flujo de efectivo, reportería,
   fiscal). `[[POR LLENAR]]`
 - **Endurecimiento pendiente:** validación de adjuntos (tamaño/tipo) + descarga por

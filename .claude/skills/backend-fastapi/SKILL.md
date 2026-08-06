@@ -113,10 +113,14 @@ def submit(solicitud_id: str, db: Session = Depends(get_db),
 
 ## SQL Server / SQLite (notas)
 
-- PKs UUID por el tipo **GUID portable** de `database.py` (hoy `CHAR(36)`; en SQL Server,
-  decisión `CHAR(36)` vs `UNIQUEIDENTIFIER` — Frente 2). Textos con `Unicode`
-  (→ `NVARCHAR` en SQL Server). Dinero `Numeric`/`DECIMAL(14,2)`, nunca float. Estados con
-  el tipo `Enum` de SQLAlchemy (→ `VARCHAR` + CHECK en ambos dialectos).
+- PKs UUID por el tipo **GUID portable** de `database.py`: `CHAR(36)` en SQLite y
+  `VARCHAR(36)` en SQL Server (**ADR-004**: se mantiene portable, **sin**
+  `UNIQUEIDENTIFIER`), generados en la app con `new_uuid()`. Tipos de columna según
+  **ADR-009**: texto corto `Unicode(n)` (→ `NVARCHAR(n)`), texto largo con el helper
+  `unicode_text()` (→ `NVARCHAR(MAX)`, nunca `UnicodeText` pelado), fecha sola `Date`
+  (→ `DATE`), fecha/hora con el helper `datetime2()` (→ `DATETIME2`, nunca `DateTime`
+  pelado). Dinero `Numeric`/`DECIMAL(14,2)`, nunca float. Estados con el tipo `Enum` de
+  SQLAlchemy (→ `VARCHAR` + CHECK en ambos dialectos).
 - Endpoints **síncronos** (`def`) con pyodbc en prod; no mezclar `async def` con acceso
   síncrono. Engine/sesión central en `app/database.py`.
 - Cambios de esquema SOLO por Alembic (skill `migraciones-sqlserver`).

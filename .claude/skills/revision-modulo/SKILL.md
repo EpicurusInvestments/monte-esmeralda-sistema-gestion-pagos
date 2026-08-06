@@ -44,7 +44,10 @@ crítico (seguridad, auditoría, migraciones, documentación) falta.
 ## Datos / migraciones
 - [ ] Esquema solo por migraciones Alembic revisadas (con `downgrade` correcto).
 - [ ] La migración corre en **SQLite (dev) y SQL Server (prod)**: tipos genéricos de
-      SQLAlchemy, GUID portable, `Unicode`/NVARCHAR, `Numeric`/DECIMAL.
+      SQLAlchemy, GUID portable, `Numeric`/DECIMAL.
+- [ ] Tipos según **ADR-009**: `Unicode(n)`/NVARCHAR y `unicode_text()`/NVARCHAR(MAX) para
+      texto; `Date` y `datetime2()`/DATETIME2 para fechas. **Sin** `UnicodeText` ni
+      `DateTime` pelados (producen NTEXT deprecado y DATETIME legado en SQL Server).
 - [ ] FKs explícitas + índices en FKs y columnas de filtros/bandejas.
 
 ## Integraciones (si aplica)
