@@ -4,7 +4,8 @@ from __future__ import annotations
 import uuid
 from typing import Generator
 
-from sqlalchemy import create_engine, types
+from sqlalchemy import DateTime, UnicodeText, create_engine, types
+from sqlalchemy.dialects import mssql
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
@@ -24,6 +25,16 @@ engine = create_engine(
 )
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+
+def datetime2() -> DateTime:
+    """DATETIME2 en SQL Server; DATETIME en otros dialectos (p.ej. SQLite)."""
+    return DateTime().with_variant(mssql.DATETIME2(), "mssql")
+
+
+def unicode_text() -> UnicodeText:
+    """NVARCHAR(MAX) en SQL Server; TEXT en otros dialectos (p.ej. SQLite)."""
+    return UnicodeText().with_variant(mssql.NVARCHAR(None), "mssql")
 
 
 class Base(DeclarativeBase):
