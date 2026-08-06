@@ -102,3 +102,8 @@ Frontend (React/TS)  →  API (FastAPI routers)  →  Negocio (services)  →  D
 Ver la sección 14 del `CLAUDE.md` raíz. En síntesis: tipo del GUID en SQL Server; alcance y
 prioridad del Paquete 2; endurecimiento (validación de adjuntos, paginación, bloqueo duro
 por cumplimiento); estrategia de ambientes/despliegue.
+
+- **Docker (diferido):** `docker-compose.yml` aún levanta Postgres e inyecta una
+  `DATABASE_URL` de Postgres, y el `Dockerfile` instala `libpq-dev` en vez del ODBC
+  Driver 18. Local usa venv+SQLite y prod usa RDS gestionado, así que Docker se
+  adaptará en un incremento propio si se decide containerizar. `[[POR LLENAR: decisión]]`

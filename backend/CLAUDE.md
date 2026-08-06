@@ -15,9 +15,13 @@
   - **Producción (Frente 2):** SQL Server en AWS RDS, driver **pyodbc (síncrono)** sobre
     **ODBC Driver 18 for SQL Server**. Los endpoints son `def` (sync); FastAPI los corre en
     threadpool. Ser consistente: no mezclar `async def` con acceso pyodbc síncrono.
-- Conexión **solo** por variable de entorno `DATABASE_URL` (ver `.env.example`):
-  - dev: `sqlite:///./monte_esmeralda.db`
-  - prod: `mssql+pyodbc://USER:PASSWORD@HOST:1433/MESistemaGestionPagos?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes&TrustServerCertificate=...`
+- Conexión por variables de entorno (ver `.env.example`), seleccionada con `DB_BACKEND`:
+  - `DB_BACKEND=sqlite` (default, dev): usa `DATABASE_URL` (p.ej. `sqlite:///./monte_esmeralda.db`).
+  - `DB_BACKEND=sqlserver` (prod): la URL `mssql+pyodbc` se construye en `config.py`
+    (propiedad `sqlalchemy_url`) vía `odbc_connect`, a partir de `DB_HOST`, `DB_PORT`,
+    `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_ENCRYPT`, `DB_TRUST_SERVER_CERTIFICATE`,
+    `ODBC_DRIVER`.
+  - El engine y las migraciones (Alembic) usan `settings.sqlalchemy_url`.
   - **Usuario y contraseña NUNCA en código ni versionados.**
 - Gestor de dependencias: **pip** con `requirements.txt` (versiones fijadas).
 
