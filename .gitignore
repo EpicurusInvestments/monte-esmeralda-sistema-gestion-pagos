@@ -1,0 +1,51 @@
+# .gitignore — Sistema de Gestión de Pagos y Flujo de Efectivo (Monte Esmeralda)
+# Lo más importante: el .env con credenciales reales NUNCA se sube al repositorio.
+
+# Variables de entorno / secretos
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# Python / backend
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Base de datos local de desarrollo (SQLite)
+*.db
+
+# Almacenamiento local de adjuntos (dev): no se versiona
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.vite/
+.next/
+out/
+*.local
+*.tsbuildinfo
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# IDE / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs y temporales
+*.log
+tmp/
+~$*

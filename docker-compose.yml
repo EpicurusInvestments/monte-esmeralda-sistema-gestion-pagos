@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: monte
+      POSTGRES_PASSWORD: monte
+      POSTGRES_DB: monte_esmeralda
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U monte -d monte_esmeralda"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://monte:monte@db:5432/monte_esmeralda
+      JWT_SECRET: change-me-in-production
+      FRONTEND_ORIGIN: http://localhost:3000
+      STORAGE_DIR: /app/uploads
+    ports:
+      - "8000:8000"
+    volumes:
+      - uploads:/app/uploads
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    environment:
+      # The browser runs on the host, so it reaches the backend at localhost.
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
+  uploads:
