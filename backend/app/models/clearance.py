@@ -7,10 +7,10 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 
-from sqlalchemy import Date, DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import Date, Enum, ForeignKey, Unicode
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from ..database import Base, GUID, new_uuid
+from ..database import Base, GUID, datetime2, new_uuid, unicode_text
 from ..enums import ClearanceStatus
 
 
@@ -30,11 +30,11 @@ class SupplierClearance(Base):
     )
     clearance_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     valid_until: Mapped[date | None] = mapped_column(Date, nullable=True)
-    compliance_reference: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    compliance_reference: Mapped[str | None] = mapped_column(Unicode(255), nullable=True)
+    notes: Mapped[str | None] = mapped_column(unicode_text(), nullable=True)
     created_by: Mapped[str | None] = mapped_column(
         GUID, ForeignKey("users.id"), nullable=True
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(datetime2(), default=_now, nullable=False)
 
     supplier: Mapped["Supplier"] = relationship(back_populates="clearances")

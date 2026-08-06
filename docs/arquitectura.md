@@ -95,6 +95,26 @@ Frontend (React/TS)  →  API (FastAPI routers)  →  Negocio (services)  →  D
 - **Consecuencias:** el dominio no conoce el medio de almacenamiento; cambiar a S3 no toca
   la lógica.
 
+### ADR-009 — Texto Unicode (NVARCHAR) y fechas DATETIME2 en SQL Server
+- **Contexto:** los datos son en español (acentos, ñ) y el DDL generado para SQL Server
+  producía `VARCHAR` para texto y `DATETIME` para fechas/hora. `VARCHAR` en SQL Server no
+  es UTF-8 por defecto: depende del collation de la columna y puede corromper acentos y ñ.
+- **Decisión:** tres tipos, todos definidos en `database.py` o directos de SQLAlchemy:
+  - **Texto acotado:** `Unicode(n)` → `NVARCHAR(n)` en SQL Server, `VARCHAR(n)` en SQLite.
+  - **Texto largo:** el helper `unicode_text()`, que aplica
+    `UnicodeText().with_variant(mssql.NVARCHAR(None), "mssql")` → **`NVARCHAR(MAX)`** en SQL
+    Server, `TEXT` en SQLite. La variante es necesaria porque `UnicodeText` a secas mapea a
+    `NTEXT`, que Microsoft tiene **deprecado** y que no admite muchas funciones de cadena.
+  - **Fecha/hora:** el helper `datetime2()`, que aplica
+    `DateTime().with_variant(mssql.DATETIME2(), "mssql")` → `DATETIME2` en SQL Server,
+    `DATETIME` en SQLite.
+
+  Los `Enum` con `native_enum=False` se quedan en `VARCHAR` + `CHECK`: sus valores son ASCII.
+  El tipo `GUID` no cambia (ver ADR-004).
+- **Consecuencias:** el esquema es portable entre ambos motores y nace correcto en RDS, sin
+  necesidad de un `ALTER` posterior. La migración inicial se regeneró con estos tipos
+  (RDS aún estaba vacío, así que no se acumuló un ALTER).
+
 ---
 
 ## Decisiones pendientes

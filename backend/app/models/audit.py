@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, JSON, String, Text
+from sqlalchemy import ForeignKey, JSON, Unicode
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from ..database import Base, GUID, new_uuid
+from ..database import Base, GUID, datetime2, new_uuid, unicode_text
 
 
 def _now() -> datetime:
@@ -17,15 +17,15 @@ class AuditEvent(Base):
     __tablename__ = "audit_events"
 
     id: Mapped[str] = mapped_column(GUID, primary_key=True, default=new_uuid)
-    entity_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    entity_type: Mapped[str] = mapped_column(Unicode(50), nullable=False, index=True)
     entity_id: Mapped[str] = mapped_column(GUID, nullable=False, index=True)
-    action: Mapped[str] = mapped_column(String(50), nullable=False)
+    action: Mapped[str] = mapped_column(Unicode(50), nullable=False)
     performed_by: Mapped[str | None] = mapped_column(
         GUID, ForeignKey("users.id"), nullable=True
     )
     before_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     after_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now, nullable=False)
+    reason: Mapped[str | None] = mapped_column(unicode_text(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(datetime2(), default=_now, nullable=False)
 
     performer = relationship("User")
