@@ -45,9 +45,10 @@ ambos. Por eso:
    FKs, índices, CHECKs y que el `downgrade` revierta correctamente.
 4. Aplicar en dev (SQLite): `alembic upgrade head`; verificar que la app levanta y que
    `pytest` pasa.
-5. Para SQL Server: apuntar `DATABASE_URL` a la instancia RDS y `alembic upgrade head`
-   **solo después de revisar** (ver notas de AWS). En una instancia compartida, con
-   cuidado.
+5. Para SQL Server: poner `DB_BACKEND=sqlserver` en `.env` (con `DB_HOST`, `DB_NAME`,
+   `DB_USER`, `DB_PASSWORD`, etc.) y `alembic upgrade head` **solo después de revisar**
+   (ver notas de AWS). Alembic toma la URL de `settings.sqlalchemy_url`. En una instancia
+   compartida, con cuidado.
 
 ## Convenciones de esquema
 
@@ -85,7 +86,10 @@ ambos. Por eso:
 
 ## AWS RDS (notas)
 
-- Conexión por `DATABASE_URL` en `.env` (`mssql+pyodbc://...`), endpoint
+- Conexión con `DB_BACKEND=sqlserver` en `.env`: `config.py` arma la URL `mssql+pyodbc`
+  vía `odbc_connect` a partir de `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`,
+  `DB_ENCRYPT`, `DB_TRUST_SERVER_CERTIFICATE` y `ODBC_DRIVER`. **No** hay un camino
+  `DATABASE_URL=mssql+pyodbc://...`: `DATABASE_URL` es solo la ruta SQLite de dev. Endpoint
   `devapps.cyd2zy4jjmkm.us-west-2.rds.amazonaws.com`, base `MESistemaGestionPagos`,
   puerto 1433, ODBC Driver 18, TLS (`Encrypt` / `TrustServerCertificate` según la
   instancia). **Credenciales solo en `.env` / Secrets Manager, nunca versionadas.**

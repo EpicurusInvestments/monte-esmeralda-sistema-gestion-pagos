@@ -34,8 +34,10 @@ negocio.**
 Archivos con plantillas mínimas y `# TODO` claros:
 
 - `app/models/<entidad>.py` — una clase SQLAlchemy por entidad, con PK por el **tipo GUID
-  portable** de `database.py`, `created_at`/`updated_at`, y `# TODO(equipo)` por cada campo
-  (nombre y tipo como referencia en comentario). Estados con el tipo `Enum` de SQLAlchemy.
+  portable** de `database.py`, `created_at`/`updated_at` con el helper `datetime2()`, y
+  `# TODO(equipo)` por cada campo (nombre y tipo como referencia en comentario). Estados con
+  el tipo `Enum` de SQLAlchemy. Tipos de columna según **ADR-009** (ver la skill
+  `migraciones-sqlserver`).
 - Añadir los nuevos estados/roles necesarios a `app/enums.py` (fuente única).
 - `app/schemas/<modulo>.py` — `XxxCreate`, `XxxUpdate`, `XxxRead`/`XxxDetail` (Pydantic) con
   campos como `# TODO`.

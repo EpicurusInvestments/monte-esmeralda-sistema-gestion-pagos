@@ -77,7 +77,7 @@ Solicitud de Pago, esta pasa por revisión operativa (Supervisor) y aprobación 
 | Librería UI | **PrimeReact** | Misma que GRC-OIR (DataTable potente, patrón lista + panel de detalle). |
 | Datos/formularios (frontend) | **TanStack Query + React Hook Form + Zod** | Igual que GRC-OIR. |
 | Backend | **Python + FastAPI** | **Se mantiene intacto.** Pydantic v2, SQLAlchemy 2.x, Alembic. JWT (HS256) + bcrypt. |
-| Base de datos | **Local: SQLite** · **Producción: Microsoft SQL Server en AWS** | Driver de producción: **pyodbc** + ODBC Driver 18 (adaptación en Frente 2; hoy el código trae Postgres/psycopg2). Endpoint y credenciales solo por `.env`. |
+| Base de datos | **Local: SQLite** · **Producción: Microsoft SQL Server en AWS** | Driver de producción: **pyodbc** + ODBC Driver 18 (Frente 2 ✅ hecho y verificado contra RDS; Postgres/psycopg2 ya se retiró). Se elige con `DB_BACKEND` (`sqlite` \| `sqlserver`). Endpoint y credenciales solo por `.env`. |
 | Almacenamiento de adjuntos | Abstracción compatible con S3 (`services/storage.py`) | Local: disco (`uploads/`). Producción: bucket S3 (a futuro). |
 | Identidad | JWT propio (correo + contraseña, bcrypt) | NO usa SSO. RBAC por rol. |
 | Entorno local | Ejecución directa (venv + uvicorn / npm) | Hay `docker-compose.yml`, pero en local se trabaja con SQLite sin contenedor de BD. |
