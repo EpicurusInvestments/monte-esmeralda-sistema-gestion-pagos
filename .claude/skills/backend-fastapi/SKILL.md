@@ -113,8 +113,9 @@ def submit(solicitud_id: str, db: Session = Depends(get_db),
 
 ## SQL Server / SQLite (notas)
 
-- PKs UUID por el tipo **GUID portable** de `database.py` (hoy `CHAR(36)`; en SQL Server,
-  decisión `CHAR(36)` vs `UNIQUEIDENTIFIER` — Frente 2). Textos con `Unicode`
+- PKs UUID por el tipo **GUID portable** de `database.py`: `CHAR(36)` en SQLite y
+  `VARCHAR(36)` en SQL Server (**ADR-004**: se mantiene portable, **sin**
+  `UNIQUEIDENTIFIER`), generados en la app con `new_uuid()`. Textos con `Unicode`
   (→ `NVARCHAR` en SQL Server). Dinero `Numeric`/`DECIMAL(14,2)`, nunca float. Estados con
   el tipo `Enum` de SQLAlchemy (→ `VARCHAR` + CHECK en ambos dialectos).
 - Endpoints **síncronos** (`def`) con pyodbc en prod; no mezclar `async def` con acceso

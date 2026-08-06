@@ -47,9 +47,10 @@ ambos. Por eso:
 
 ## Convenciones de esquema
 
-- **PK**: tipo GUID portable, generado en la app (`new_uuid()`), nombre `<entidad>_id` /
-  `id`. En SQL Server se decidirá `CHAR(36)` (lo actual) vs `UNIQUEIDENTIFIER`
-  `[[POR LLENAR: decisión del Frente 2]]`.
+- **PK**: el tipo **GUID portable** de `database.py`, que persiste como `CHAR(36)` /
+  `VARCHAR(36)` en ambos motores (decisión **ADR-004**: se mantiene por portabilidad
+  SQLite↔SQL Server; **NO** se usa `UNIQUEIDENTIFIER`). UUID generados en la app con
+  `new_uuid()`. Nombre `<entidad>_id` / `id`.
 - **Textos**: `Unicode(n)` (→ `NVARCHAR` en SQL Server) para acentos/ñ sin corromper.
   Longitudes según el campo.
 - **Dinero**: `Numeric(14, 2)` (→ `DECIMAL(14,2)`). Nunca `Float`.
