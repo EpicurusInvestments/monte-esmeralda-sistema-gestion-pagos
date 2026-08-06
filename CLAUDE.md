@@ -73,7 +73,7 @@ Solicitud de Pago, esta pasa por revisión operativa (Supervisor) y aprobación 
 
 | Capa | Tecnología | Notas |
 |---|---|---|
-| Frontend | **React + TypeScript + Vite** | En migración (Frente 3): hoy es Next.js hecho a mano; el objetivo es paridad con GRC-OIR. TS estricto. |
+| Frontend | **React + TypeScript + Vite** | En migración (Frente 3): el andamiaje ya vive en `frontend/`; las pantallas se migran por incrementos desde `legacy-frontend/` (Next.js retirado). Objetivo: paridad con GRC-OIR. TS estricto. |
 | Librería UI | **PrimeReact** | Misma que GRC-OIR (DataTable potente, patrón lista + panel de detalle). |
 | Datos/formularios (frontend) | **TanStack Query + React Hook Form + Zod** | Igual que GRC-OIR. |
 | Backend | **Python + FastAPI** | **Se mantiene intacto.** Pydantic v2, SQLAlchemy 2.x, Alembic. JWT (HS256) + bcrypt. |
@@ -109,10 +109,14 @@ monte-esmeralda-sistema-gestion-pagos/
 │       ├── routers/           # endpoints por recurso
 │       ├── services/          # LÓGICA DE NEGOCIO (workflow, permissions, audit, …)
 │       └── tests/             # pytest (unitarias + integración)
-├── frontend/                  # HOY Next.js; se RECONSTRUYE en Frente 3 (Vite+PrimeReact)
+├── frontend/                  # Vite + React + TS + PrimeReact — EN MIGRACIÓN (Frente 3)
 │   ├── CLAUDE.md              # reglas del frontend
-│   └── src/                   # estructura objetivo: app/ (router, providers, layout),
-│                              # modules/ (espeja backend), shared/ (ui, lib, hooks)
+│   └── src/
+│       ├── app/               # main.tsx, providers, router, layout
+│       ├── modules/           # un módulo por recurso (espeja backend); se va llenando
+│       └── shared/            # ui/ (tema) y lib/ (api, types, labels, nav)
+├── legacy-frontend/           # Next.js RETIRADO — solo referencia visual mientras se
+│                              # migran las pantallas; NO se desarrolla ni se levanta
 └── docs/                      # DOCUMENTACIÓN VIVA (se crea en Frente 4)
     ├── arquitectura.md
     ├── API-CONTRACT.md
@@ -135,7 +139,7 @@ Frentes de trabajo (incrementales; cada uno deja el sistema en verde):
 |---|---|---|
 | **F1 — Higiene, versionado y arranque** | Renombrado, limpieza del baseline, JWT propio, repo en GitHub, arranque local verificado. | ✅ Hecho |
 | **F2 — Adaptación del backend a SQL Server** | Driver pyodbc + cadena `mssql+pyodbc`, tipo GUID, revisión de migración Alembic, prueba contra AWS. Local sigue en SQLite. | ✅ Hecho |
-| **F3 — Migración del frontend** | Reconstruir el frontend en Vite + React + TS + PrimeReact + TanStack Query + RHF + Zod. Backend intacto. Reusa `api.ts`, `types.ts`, `labels.ts`, `nav.ts`. | Pendiente |
+| **F3 — Migración del frontend** | Reconstruir el frontend en Vite + React + TS + PrimeReact + TanStack Query + RHF + Zod. Backend intacto. Reusa `api.ts`, `types.ts`, `labels.ts`, `nav.ts`. Andamiaje (Vite + PrimeReact) aterrizado; migración de pantallas en progreso. | 🔄 En curso |
 | **F4 — Documentación y skills** | Adaptar `CLAUDE.md` (raíz/back/front) y skills de GRC-OIR; generar `docs/`. | En curso |
 | **F5 — Funcionalidad nueva (Paquete 2)** | Endurecimiento; tesorería/remesas; matriz de flujo de efectivo; reportería; fiscal (a futuro). | Pendiente |
 
@@ -244,8 +248,12 @@ Política: **el código y su documentación viajan en el mismo PR.** Documentos 
   `DATABASE_URL=sqlite:///./monte_esmeralda.db` y tu `JWT_SECRET`. Crear BD con
   `alembic upgrade head` y `python -m app.seed`; correr con `uvicorn app.main:app --reload`
   (http://localhost:8000). Pruebas: `pytest`.
-- **Frontend:** `npm install` + `npm run dev` (http://localhost:3000);
-  `NEXT_PUBLIC_API_URL=http://localhost:8000` (cambiará al migrar a Vite en el Frente 3).
+- **Frontend:** `cd frontend` + `npm install` + `npm run dev` (**http://localhost:5173**, el
+  puerto de Vite). La base de la API se lee con `import.meta.env.VITE_API_URL`: copia
+  `.env.local.example` a `.env.local` con `VITE_API_URL=http://localhost:8000`. Calidad:
+  `npm run typecheck`, `npm run lint`, `npm test`.
+- El frontend heredado (Next.js) quedó en `legacy-frontend/` solo como referencia visual: **ya
+  no se levanta ni se desarrolla**.
 - Usuarios semilla documentados en el README.
 
 ## 12. Git y flujo de trabajo
@@ -292,8 +300,9 @@ documentación actualizada.
 - **Endurecimiento pendiente:** validación de adjuntos (tamaño/tipo) + descarga por
   streaming; paginación/orden en listados; bloqueo **duro** por cumplimiento vencido de
   proveedor; ¿notificaciones por correo en transiciones clave? `[[POR LLENAR: priorizar]]`
-- **Vulnerabilidad de Next.js** en el frontend actual: se resuelve de raíz al migrar
-  (Frente 3); mientras tanto es un pendiente conocido y solo corre en local.
+- **Vulnerabilidad de Next.js:** ya no afecta al frontend en uso (el nuevo es Vite). Queda
+  únicamente en `legacy-frontend/`, que no se levanta ni se despliega; desaparece del repo al
+  cerrar el Frente 3 y retirar esa carpeta.
 
 ## 15. Glosario rápido
 
