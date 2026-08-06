@@ -9,7 +9,7 @@ from app.config import settings
 
 for attempt in range(30):
     try:
-        engine = create_engine(settings.database_url)
+        engine = create_engine(settings.sqlalchemy_url)
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         print("Base de datos disponible.")

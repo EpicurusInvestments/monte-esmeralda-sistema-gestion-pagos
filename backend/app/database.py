@@ -10,13 +10,15 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from .config import settings
 
+DATABASE_URL = settings.sqlalchemy_url
+
 connect_args = {}
-if settings.database_url.startswith("sqlite"):
+if DATABASE_URL.startswith("sqlite"):
     # Required for SQLite when used across threads (FastAPI / tests).
     connect_args = {"check_same_thread": False}
 
 engine = create_engine(
-    settings.database_url,
+    DATABASE_URL,
     connect_args=connect_args,
     pool_pre_ping=True,
 )

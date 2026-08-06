@@ -13,7 +13,10 @@ from app.database import Base
 import app.models  # noqa: F401
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# set_main_option writes into the .ini, where configparser treats "%" as
+# interpolation syntax. The SQL Server URL is URL-encoded (%3D, %7B, ...), so it
+# must be escaped as "%%" here. Values read back out are un-escaped again.
+config.set_main_option("sqlalchemy.url", settings.sqlalchemy_url.replace("%", "%%"))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -31,7 +34,7 @@ def render_item(type_, obj, autogen_context):
 
 def run_migrations_offline() -> None:
     context.configure(
-        url=settings.database_url,
+        url=settings.sqlalchemy_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -44,7 +47,7 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     section = config.get_section(config.config_ini_section, {})
-    section["sqlalchemy.url"] = settings.database_url
+    section["sqlalchemy.url"] = settings.sqlalchemy_url
     connectable = engine_from_config(
         section,
         prefix="sqlalchemy.",
