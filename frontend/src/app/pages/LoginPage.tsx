@@ -14,6 +14,7 @@ import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 
+import logoMonteEsmeralda from "@/assets/logo-monte-esmeralda.png";
 import { ApiError } from "@/shared/lib/api";
 import { useAuth } from "@/shared/lib/auth";
 import { resolveRoleHome } from "@/shared/lib/roleHome";
@@ -59,12 +60,17 @@ export function LoginPage() {
   return (
     <main className="auth-wrap">
       <div className="auth-card">
-        <div className="auth-logo">
-          MONTE<span>ESMERALDA</span>
+        <div className="auth-brand">
+          <img
+            className="auth-logo-img"
+            src={logoMonteEsmeralda}
+            alt="Monte Esmeralda"
+          />
+          <h1 className="auth-system-name">
+            Sistema de Gestión de Pagos y Flujo de Efectivo
+          </h1>
+          <h2 className="auth-sub">Iniciar sesión</h2>
         </div>
-
-        <h1 className="auth-title">Iniciar sesión</h1>
-        <p className="auth-sub">Gestión de Pagos y Flujo de Efectivo</p>
 
         {formError && (
           <div className="auth-error">
@@ -86,8 +92,6 @@ export function LoginPage() {
                   type="email"
                   autoComplete="username"
                   invalid={!!errors.email}
-                  className="w-full"
-                  style={{ width: "100%" }}
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
@@ -110,11 +114,11 @@ export function LoginPage() {
                   // `id` va al contenedor; el <label htmlFor> debe apuntar al input.
                   inputId="password"
                   autoComplete="current-password"
+                  // `feedback={false}` quita la barra de fortaleza; `toggleMask` muestra el
+                  // ojo. El ancho y el centrado del ojo se resuelven en theme.css.
                   feedback={false}
                   toggleMask
                   invalid={!!errors.password}
-                  style={{ width: "100%" }}
-                  inputStyle={{ width: "100%" }}
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}

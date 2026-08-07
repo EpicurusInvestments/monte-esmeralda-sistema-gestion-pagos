@@ -2,8 +2,8 @@
  *
  * Portado del patrón de pantalla de GRC-OIR, con una diferencia de fondo: GRC-OIR pinta
  * cada FASE de un color distinto (`--phase*`); este sistema no tiene fases, así que esos
- * tokens se colapsaron en un ÚNICO color primario (`--primary*`, azul #185fa5 de la misma
- * paleta). También se descartó lo que aquí no aplica: malla y tarjetas de fases, drawer de
+ * tokens se colapsaron en un ÚNICO color primario (`--primary*`, el verde de marca de Monte
+ * Esmeralda). También se descartó lo que aquí no aplica: malla y tarjetas de fases, drawer de
  * navegación por fases y los tags de origen de dato (Heredado/Calculado/Timbrado).
  *
  * Se importa DESPUÉS del tema de PrimeReact en main.tsx para poder ganarle.
@@ -39,12 +39,15 @@
   --indigo-bg: #eeedfe;
   --indigo-text: #3c3489;
 
-  /* ── Color primario (único; reemplaza al esquema por fase de GRC-OIR) ───── */
-  --primary: #185fa5;
-  --primary-bg: var(--blue-bg);
-  --primary-text: var(--blue-text);
-  --primary-border: #a9cdea;
-  --primary-hover: #154c85;
+  /* ── Color primario (único; reemplaza al esquema por fase de GRC-OIR) ─────
+   * Verde de marca de Monte Esmeralda. Todo el acento de la app (sidebar activo,
+   * botones, foco de inputs, fila seleccionada) sale de aquí: no hardcodear color
+   * primario en pantallas ni en componentes. */
+  --primary: #227252;
+  --primary-bg: #e4f2ec;
+  --primary-text: #124a35;
+  --primary-border: #a6d3c2;
+  --primary-hover: #1b5c42;
 
   /* ── Formas y medidas ───────────────────────────────────────────────────── */
   --r: 8px;
@@ -121,6 +124,33 @@ body {
 
 .p-inputtext {
   font-family: var(--font);
+}
+
+/* Password (toggleMask) a ancho completo.
+ * Su markup tiene TRES niveles: .p-password → .p-icon-field → input. Si el ancho solo se
+ * pone en la raíz y en el input, el .p-icon-field intermedio se queda del tamaño de su
+ * contenido y el ojo —que se posiciona en absoluto contra ÉL— aparece descuadrado. */
+.p-password {
+  display: inline-flex;
+  width: 100%;
+}
+.p-password > .p-icon-field {
+  width: 100%;
+}
+.p-password .p-password-input {
+  width: 100%;
+}
+
+/* Centrado vertical del ícono (ojo). El tema lo resuelve con `margin-top: -0.5rem`, que
+ * asume un ícono de 16px cuando el real mide 14px. Con translateY el centrado no depende
+ * del tamaño del ícono. El `padding-right: 2.5rem` del input lo pone el propio tema
+ * (`.p-icon-field-right > .p-inputtext`), así que el texto no se encima. */
+.p-icon-field > .p-input-icon {
+  top: 50%;
+  margin-top: 0;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
 }
 .p-inputtext:enabled:focus {
   border-color: var(--primary);
@@ -733,37 +763,44 @@ body {
 }
 .auth-card {
   width: 100%;
-  max-width: 380px;
+  max-width: 460px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--rl);
   box-shadow: 0 1px 2px rgba(24, 24, 22, 0.04);
-  padding: 28px;
+  padding: 32px 36px 30px;
 }
-.auth-logo {
-  font-family: var(--mono);
-  font-size: 13px;
+/* Cabecera de marca: logotipo → nombre del sistema → subtítulo. Todo centrado. */
+.auth-brand {
+  text-align: center;
+  margin-bottom: 26px;
+}
+.auth-logo-img {
+  width: 260px;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto 18px;
+}
+.auth-system-name {
+  font-size: 17px;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--text2);
-  margin-bottom: 18px;
-}
-.auth-logo span {
-  color: var(--primary);
-}
-.auth-title {
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
 }
 .auth-sub {
-  font-size: 12.5px;
-  color: var(--text3);
-  margin-top: 4px;
-  margin-bottom: 22px;
+  font-size: 13px;
+  color: var(--text2);
+  margin-top: 8px;
 }
 .auth-field {
   margin-bottom: 14px;
+}
+/* Los campos del login ocupan el ancho de la tarjeta (sin estilos inline por componente). */
+.auth-field .p-inputtext {
+  width: 100%;
 }
 .auth-error {
   margin-bottom: 16px;
