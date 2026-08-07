@@ -69,8 +69,34 @@ incorrectas → **401** con `{"code": "AUTHENTICATION_ERROR", ...}`.
 | Método | Ruta | Propósito | Permiso |
 |---|---|---|---|
 | GET | `/concepts?leaves_only=&active_only=` | Listar el catálogo (árbol); `leaves_only` filtra hojas asignables | `concept:view` |
-| POST | `/concepts` | Crear concepto | `concept:edit` (Admin) |
-| PATCH | `/concepts/{concept_id}` | Actualizar concepto | `concept:edit` (Admin) |
+| POST | `/concepts` | Crear concepto → **201** | `concept:edit` (Admin) |
+| PATCH | `/concepts/{concept_id}` | Actualizar concepto → **200** | `concept:edit` (Admin) |
+
+**`ConceptOut`** (respuesta de los tres endpoints) devuelve, además de los campos propios
+(`id`, `code`, `name`, `parent_id`, `section`, `is_header`, `sort_order`, `active`), dos
+campos **derivados de solo lectura** que calcula `concept_service.to_out`:
+
+- **`parent_name`** — nombre del concepto padre (`null` si es raíz).
+- **`path`** — ruta legible completa, `"Grupo › Subgrupo › Concepto"` (separador `›`, U+203A).
+  Sirve para distinguir hojas con nombre idéntico en grupos distintos.
+
+**`POST /concepts`** — body: `{code, name, section, parent_id?, is_header?, sort_order?,
+active?}`. Defaults del backend: `parent_id=null`, `is_header=false`, `sort_order=0`,
+`active=true`. El **código es único**; si ya existe responde **422**:
+
+```json
+{ "code": "VALIDATION_ERROR", "message": "Ya existe un concepto con ese código." }
+```
+
+**`PATCH /concepts/{concept_id}`** — todos los campos son opcionales (`exclude_unset`): solo
+se actualiza lo enviado. Si el id no existe → **404** `NOT_FOUND`.
+
+**No hay borrado.** El catálogo se da de baja **lógicamente** con `active = false`: no existe
+`DELETE /concepts`. Un concepto inactivo sigue siendo visible con `active_only=false` y
+conserva su historial en las Solicitudes que ya lo referencian.
+
+> Los `parent_id` que apuntan a otra sección y los ciclos en el árbol **no se validan** hoy
+> (ni en backend ni en frontend). Ver `docs/modulos/conceptos.md`.
 
 ## Solicitudes de Pago (`/solicitudes`)
 

@@ -53,6 +53,9 @@
   --r: 8px;
   --rl: 12px;
   --detail-width: 420px;
+  /* Padding lateral del patrón de pantalla. Lo comparten el encabezado, la toolbar y la
+     primera/última columna de la lista, para que todo alinee en la misma vertical. */
+  --pane-pad: 22px;
 
   /* ── Tipografía ─────────────────────────────────────────────────────────── */
   --font: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
@@ -312,7 +315,7 @@ body {
 .cat-header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 14px 22px;
+  padding: 14px var(--pane-pad);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -333,14 +336,14 @@ body {
 .main-pane {
   flex: 1;
   overflow-y: auto;
-  padding: 22px;
+  padding: var(--pane-pad);
 }
 
 /* ── Toolbar ─────────────────────────────────────────────────────────────── */
 .toolbar {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 10px 22px;
+  padding: 10px var(--pane-pad);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -438,6 +441,38 @@ body {
   font-size: 13px;
   padding: 32px;
   text-align: center;
+}
+
+/* ── Alineación horizontal de la lista con el encabezado y la toolbar ────────
+ * La primera columna debe empezar en la misma vertical que el título (`--pane-pad`) y la
+ * última debe respirar antes del panel de detalle.
+ *
+ * El padding va en las CELDAS, no en `.list-pane`, por dos razones:
+ *  1) La misma regla aplica a `th` y a `td`, así que el encabezado sticky no se puede
+ *     descuadrar respecto a las filas: comparten el valor por construcción.
+ *  2) El resaltado de fila (hover / seleccionada) sigue llegando de borde a borde; con
+ *     padding en el contenedor quedaría cortado.
+ *
+ * Se incluye `.p-datatable` en el selector para ganarle por especificidad a la regla de
+ * tamaño de PrimeReact (`.p-datatable.p-datatable-sm … > th`), sin depender del orden.
+ * ────────────────────────────────────────────────────────────────────────── */
+.list-pane .p-datatable .p-datatable-thead > tr > th:first-child,
+.list-pane .p-datatable .p-datatable-tbody > tr > td:first-child {
+  padding-left: var(--pane-pad);
+}
+.list-pane .p-datatable .p-datatable-thead > tr > th:last-child,
+.list-pane .p-datatable .p-datatable-tbody > tr > td:last-child {
+  padding-right: var(--pane-pad);
+}
+
+/* Misma alineación para la tabla simple del patrón (`.cat-table`). */
+.list-pane .cat-table thead th:first-child,
+.list-pane .cat-table tbody td:first-child {
+  padding-left: var(--pane-pad);
+}
+.list-pane .cat-table thead th:last-child,
+.list-pane .cat-table tbody td:last-child {
+  padding-right: var(--pane-pad);
 }
 
 /* ── Badges de estado ────────────────────────────────────────────────────── */

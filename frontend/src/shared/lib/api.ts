@@ -5,6 +5,8 @@ import type {
   ClearanceStatus,
   Comment,
   Concept,
+  ConceptCreatePayload,
+  ConceptUpdatePayload,
   LoginResponse,
   RequestType,
   Role,
@@ -149,6 +151,10 @@ export const api = {
     params.set("active_only", String(opts?.activeOnly ?? true));
     return request<Concept[]>(`/concepts?${params.toString()}`);
   },
+  createConcept: (body: ConceptCreatePayload) =>
+    request<Concept>("/concepts", { method: "POST", body }),
+  updateConcept: (id: string, body: ConceptUpdatePayload) =>
+    request<Concept>(`/concepts/${id}`, { method: "PATCH", body }),
 
   // --- Solicitudes ----------------------------------------------------------
   listSolicitudes: (filters?: {

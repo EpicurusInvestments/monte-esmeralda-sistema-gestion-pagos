@@ -16,13 +16,11 @@
  * `RUTAS_MONTADAS` y la redirección por rol empieza a funcionar sola.
  */
 
+import { estaMontada } from "@/shared/lib/mountedRoutes";
 import { ROLE_HOME } from "@/shared/lib/nav";
 import type { Role } from "@/shared/lib/types";
 
-/** Rutas de `ROLE_HOME` que ya están montadas en el router. */
-const RUTAS_MONTADAS: readonly string[] = [];
-
 export function resolveRoleHome(role: Role): string {
   const destino = ROLE_HOME[role];
-  return RUTAS_MONTADAS.includes(destino) ? destino : "/";
+  return estaMontada(destino) ? destino : "/";
 }

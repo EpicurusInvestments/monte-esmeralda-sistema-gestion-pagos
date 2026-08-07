@@ -9,10 +9,11 @@
 
 import { Button } from "primereact/button";
 import type { ReactNode } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "@/shared/lib/auth";
 import { ROLE_LABELS } from "@/shared/lib/labels";
+import { estaMontada } from "@/shared/lib/mountedRoutes";
 import { navForRole } from "@/shared/lib/nav";
 
 /** Iniciales para el avatar ("Ana Tesorería" → "AT"). */
@@ -71,10 +72,20 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <div className="side-title">Navegación</div>
             {items.map((item) => {
               const active = pathname === item.href;
-              return (
+              // Solo las pantallas ya migradas navegan; el resto queda visible pero inerte.
+              return estaMontada(item.href) ? (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className={`side-item${active ? " active" : ""}`}
+                  aria-current={active ? "page" : undefined}
+                >
+                  {item.label}
+                </Link>
+              ) : (
                 <div
                   key={item.href}
-                  className={`side-item pending${active ? " active" : ""}`}
+                  className="side-item pending"
                   title="Pantalla por migrar"
                   aria-disabled="true"
                 >
@@ -85,9 +96,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </nav>
 
-        <main className="main">
-          <div className="main-pane">{children}</div>
-        </main>
+        {/* Cada pantalla arma su propio layout dentro de `.main` (cat-header + toolbar +
+            split, o un `.main-pane` si es contenido simple con scroll). */}
+        <main className="main">{children}</main>
       </div>
     </div>
   );

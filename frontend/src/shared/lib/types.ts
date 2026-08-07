@@ -90,6 +90,20 @@ export interface Concept {
   path: string | null;
 }
 
+/** Payload de alta de concepto (POST /concepts). Espeja `ConceptCreate` del backend. */
+export interface ConceptCreatePayload {
+  code: string;
+  name: string;
+  section: string;
+  parent_id?: string | null;
+  is_header?: boolean;
+  sort_order?: number;
+  active?: boolean;
+}
+
+/** Payload de edición (PATCH /concepts/{id}): todos los campos son opcionales. */
+export type ConceptUpdatePayload = Partial<ConceptCreatePayload>;
+
 export interface Attachment {
   id: string;
   solicitud_id: string;
