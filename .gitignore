@@ -44,6 +44,8 @@ playwright/.cache/
 .idea/
 .DS_Store
 Thumbs.db
+# Volcados de crash de shells de Windows (Git Bash / MSYS)
+*.stackdump
 
 # Logs y temporales
 *.log

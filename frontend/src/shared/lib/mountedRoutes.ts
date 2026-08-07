@@ -7,7 +7,7 @@
  *
  * Al migrar una pantalla: agregar su ruta aquí Y como hija de "/" en `router.tsx`.
  */
-export const RUTAS_MONTADAS: readonly string[] = ["/conceptos"];
+export const RUTAS_MONTADAS: readonly string[] = ["/conceptos", "/proveedores"];
 
 export function estaMontada(ruta: string): boolean {
   return RUTAS_MONTADAS.includes(ruta);

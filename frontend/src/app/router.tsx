@@ -19,6 +19,7 @@ import { PublicOnly, RequireAuth } from "@/app/guards";
 import { LoginPage } from "@/app/pages/LoginPage";
 import { MigrationPlaceholderPage } from "@/app/pages/MigrationPlaceholderPage";
 import { ConceptosPage } from "@/modules/conceptos/pages/ConceptosPage";
+import { ProveedoresPage } from "@/modules/proveedores/pages/ProveedoresPage";
 
 export const routes: RouteObject[] = [
   {
@@ -41,6 +42,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <MigrationPlaceholderPage /> },
       { path: "conceptos", element: <ConceptosPage /> },
+      { path: "proveedores", element: <ProveedoresPage /> },
     ],
   },
 ];
