@@ -75,6 +75,36 @@ test("sin sesión, el área privada redirige al login", async () => {
   expect(api.me).not.toHaveBeenCalled();
 });
 
+test("el login muestra la marca: logotipo, nombre del sistema y subtítulo", async () => {
+  renderApp("/login");
+
+  const logo = await screen.findByAltText("Monte Esmeralda");
+  expect(logo.tagName).toBe("IMG");
+  expect(logo.getAttribute("src")).toBeTruthy();
+
+  expect(
+    screen.getByRole("heading", {
+      name: "Sistema de Gestión de Pagos y Flujo de Efectivo",
+    }),
+  ).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Iniciar sesión" })).toBeTruthy();
+
+  // Y los campos siguen ahí.
+  expect(screen.getByLabelText("Correo")).toBeTruthy();
+  const password = screen.getByLabelText("Contraseña");
+  expect(password).toBeTruthy();
+
+  // `toggleMask` activo: existe el ojo para mostrar/ocultar, dentro del contenedor del
+  // campo (es lo que theme.css centra verticalmente). `feedback={false}`: sin barra de
+  // fortaleza.
+  const wrapper = password.closest(".p-password");
+  expect(wrapper).not.toBeNull();
+  expect(wrapper?.querySelector(".p-password-show-icon")).not.toBeNull();
+  expect(wrapper?.querySelector(".p-password-meter")).toBeNull();
+
+  expect(screen.getByRole("button", { name: /entrar/i })).toBeTruthy();
+});
+
 test("con token guardado, revalida contra /auth/me y muestra el layout con el usuario", async () => {
   vi.mocked(getToken).mockReturnValue("token-guardado");
   vi.mocked(api.me).mockResolvedValue(TESORERA);
