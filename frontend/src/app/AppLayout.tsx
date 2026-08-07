@@ -1,21 +1,34 @@
 /** Layout del área privada: header (usuario + logout) + sidebar por rol + contenido.
  *
- * El sidebar ya filtra con `navForRole(role)` de `nav.ts` (espejo de `permissions.py`), pero
- * las entradas AÚN no enlazan: sus pantallas se migran en incrementos posteriores, así que
- * se muestran en estado "por migrar". Al montar cada pantalla, convertirlas en <Link>.
+ * Usa las clases del patrón de pantalla (`shared/ui/theme.css`). El sidebar ya filtra con
+ * `navForRole(role)` de `nav.ts` (espejo de `permissions.py`), pero las entradas AÚN no
+ * enlazan: sus pantallas se migran en incrementos posteriores, así que se muestran con
+ * `.side-item.pending`. Al montar cada pantalla, convertirlas en <Link> y quitar `pending`
+ * (el cálculo de `active` contra la ruta actual ya está listo).
  */
 
 import { Button } from "primereact/button";
 import type { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "@/shared/lib/auth";
 import { ROLE_LABELS } from "@/shared/lib/labels";
 import { navForRole } from "@/shared/lib/nav";
 
+/** Iniciales para el avatar ("Ana Tesorería" → "AT"). */
+function initials(fullName: string): string {
+  return fullName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   // El guard `RequireAuth` garantiza sesión; esto es solo para satisfacer el tipado.
   if (!user) return null;
@@ -28,63 +41,53 @@ export function AppLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "1rem",
-          padding: "0.75rem 1.25rem",
-          borderBottom: "1px solid #e5e7eb",
-        }}
-      >
-        <strong>Gestión de Pagos y Flujo de Efectivo — Monte Esmeralda</strong>
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          <span style={{ textAlign: "right", lineHeight: 1.3 }}>
-            <span style={{ display: "block" }}>{user.full_name}</span>
-            <small style={{ color: "#6b7280" }}>{ROLE_LABELS[user.role]}</small>
-          </span>
-          <Button
-            label="Salir"
-            icon="pi pi-sign-out"
-            severity="secondary"
-            outlined
-            size="small"
-            onClick={onLogout}
-          />
+    <div className="app-shell">
+      <header className="app-header">
+        <div className="logo">
+          MONTE<span>ESMERALDA</span>
         </div>
+        <div className="header-spacer" />
+        <div className="user-chip">
+          <span className="user-avatar" aria-hidden="true">
+            {initials(user.full_name)}
+          </span>
+          <span>
+            <span className="user-name">{user.full_name}</span>
+            <span className="user-role">{ROLE_LABELS[user.role]}</span>
+          </span>
+        </div>
+        <Button
+          label="Salir"
+          icon="pi pi-sign-out"
+          outlined
+          size="small"
+          onClick={onLogout}
+        />
       </header>
 
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        <nav
-          aria-label="Menú principal"
-          style={{
-            width: 260,
-            flexShrink: 0,
-            padding: "1rem",
-            borderRight: "1px solid #e5e7eb",
-            background: "#fafafa",
-          }}
-        >
-          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-            {items.map((item) => (
-              <li
-                key={item.href}
-                style={{
-                  padding: "0.5rem 0.25rem",
-                  color: "#9ca3af",
-                  fontSize: "0.9375rem",
-                }}
-                title="Pantalla por migrar"
-              >
-                {item.label}
-              </li>
-            ))}
-          </ul>
+      <div className="app-body">
+        <nav className="sidebar" aria-label="Menú principal">
+          <div className="side-section">
+            <div className="side-title">Navegación</div>
+            {items.map((item) => {
+              const active = pathname === item.href;
+              return (
+                <div
+                  key={item.href}
+                  className={`side-item pending${active ? " active" : ""}`}
+                  title="Pantalla por migrar"
+                  aria-disabled="true"
+                >
+                  {item.label}
+                </div>
+              );
+            })}
+          </div>
         </nav>
 
-        <main style={{ flex: 1, padding: "1.5rem" }}>{children}</main>
+        <main className="main">
+          <div className="main-pane">{children}</div>
+        </main>
       </div>
     </div>
   );

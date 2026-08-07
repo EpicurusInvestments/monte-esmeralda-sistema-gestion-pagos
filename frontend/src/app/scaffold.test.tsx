@@ -83,6 +83,8 @@ test("con token guardado, revalida contra /auth/me y muestra el layout con el us
 
   expect(await screen.findByText("Ana Tesorería")).toBeTruthy();
   expect(screen.getByText("Tesorería")).toBeTruthy();
+  // Iniciales del avatar ("Ana Tesorería" → "AT").
+  expect(screen.getByText("AT")).toBeTruthy();
   expect(screen.getByText("Frontend en migración")).toBeTruthy();
   expect(api.me).toHaveBeenCalledTimes(1);
 });
