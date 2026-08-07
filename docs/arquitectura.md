@@ -131,6 +131,31 @@ Frontend (React/TS)  →  API (FastAPI routers)  →  Negocio (services)  →  D
   acentos y ñ (`NVARCHAR`) desde la UI cuando el frontend esté disponible (Frente 3); hoy
   está comprobado a nivel de tipos y de backend, no de punta a punta.
 
+### ADR-011 — Estructura del frontend nuevo: cliente central + módulos + registro de rutas
+- **Contexto:** al migrar la primera pantalla de negocio (Catálogo de Conceptos, Frente 3)
+  hubo que fijar dónde viven los llamados a la API, cómo se organiza cada módulo y cómo se
+  habilita una pantalla conforme se migra. GRC-OIR usa un `api.ts` por módulo sobre un CRUD
+  genérico; aquí el frontend heredado ya traía un **cliente central tipado** que se portó tal
+  cual y que refleja una API sin CRUD genérico (rutas a nivel raíz, acciones de flujo).
+- **Decisión:**
+  - **Los llamados a la API viven en el cliente central** `src/shared/lib/api.ts` (un objeto
+    `api` con un helper `request` común: token, errores `{code, message}` como `ApiError`).
+    Los módulos **no** crean su propio `api.ts`; agregar un endpoint es agregar un método ahí.
+  - **Cada módulo aporta** `types.ts` (tipos + schema Zod del formulario), `hooks.ts`
+    (TanStack Query sobre el cliente central), `components/` y `pages/`, bajo
+    `src/modules/<modulo>/`, con el mismo nombre que el recurso del backend.
+  - **Las rutas montadas se registran en** `src/shared/lib/mountedRoutes.ts`, fuente única
+    consumida por el **sidebar** (una entrada de `nav.ts` se vuelve enlace real solo si su
+    ruta está montada; si no, queda visible en estado «por migrar») y por **`roleHome.ts`**
+    (la home del rol cae a `/` mientras su pantalla no exista).
+  - Lo reutilizable entre módulos va a `src/shared/ui/` (p.ej. `Badge`), sin hardcodear color
+    ni tipografía: todo sale de los tokens de `theme.css` (ADR-009 y el primario de marca).
+- **Consecuencias:** migrar una pantalla es un cambio acotado y repetible — método(s) en el
+  cliente central, carpeta del módulo, ruta hija en `router.tsx` y una línea en
+  `mountedRoutes.ts`. El sidebar y la redirección por rol se habilitan solos. A cambio, el
+  cliente central crece con cada recurso; si llegara a estorbar, se dividirá por recurso
+  manteniendo un único helper `request`.
+
 ---
 
 ## Decisiones pendientes

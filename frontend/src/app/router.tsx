@@ -18,6 +18,7 @@ import { AppLayout } from "@/app/AppLayout";
 import { PublicOnly, RequireAuth } from "@/app/guards";
 import { LoginPage } from "@/app/pages/LoginPage";
 import { MigrationPlaceholderPage } from "@/app/pages/MigrationPlaceholderPage";
+import { ConceptosPage } from "@/modules/conceptos/pages/ConceptosPage";
 
 export const routes: RouteObject[] = [
   {
@@ -37,7 +38,10 @@ export const routes: RouteObject[] = [
         </AppLayout>
       </RequireAuth>
     ),
-    children: [{ index: true, element: <MigrationPlaceholderPage /> }],
+    children: [
+      { index: true, element: <MigrationPlaceholderPage /> },
+      { path: "conceptos", element: <ConceptosPage /> },
+    ],
   },
 ];
 
