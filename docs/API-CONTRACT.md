@@ -61,8 +61,50 @@ incorrectas → **401** con `{"code": "AUTHENTICATION_ERROR", ...}`.
 | POST | `/suppliers` | Crear proveedor | `supplier:create` |
 | GET | `/suppliers/{supplier_id}` | Detalle | `supplier:view` |
 | PATCH | `/suppliers/{supplier_id}` | Actualizar | `supplier:edit` |
-| GET | `/suppliers/{supplier_id}/clearances` | Listar cumplimientos del proveedor | `supplier:view` |
-| POST | `/suppliers/{supplier_id}/clearances` | Registrar cumplimiento | `clearance:create` (Admin) |
+| GET | `/suppliers/{supplier_id}/clearances` | Listar cumplimientos del proveedor (más reciente primero) | `supplier:view` |
+| POST | `/suppliers/{supplier_id}/clearances` | Registrar cumplimiento → **201** | `clearance:create` (Admin) |
+
+**Quién tiene cada capacidad** (fuente: `services/permissions.py`):
+
+| Capacidad | Roles |
+|---|---|
+| `supplier:view` | **todos** los roles |
+| `supplier:create` · `supplier:edit` | **`admin` y `field_admin`** |
+| `clearance:create` | **solo `admin`** |
+
+> Ojo: `supplier:create`/`edit` **no** son exclusivas de Admin — el **Admin de Campo** también
+> las tiene (es quien captura). En cambio **no** puede registrar cumplimientos. El listado de
+> cumplimientos se protege con `supplier:view`, **no** con `clearance:view`.
+
+**`SupplierOut`** incluye el objeto derivado **`clearance`** (`ClearanceSummary`), calculado por
+`supplier_service.clearance_summary` a partir del cumplimiento **más reciente**:
+
+```json
+{ "has_record": true, "status": "cleared", "effective_status": "expired",
+  "valid_until": "2025-01-01", "is_expired": true }
+```
+
+`effective_status` ∈ `cleared | pending | blocked | expired | none`. Es el campo a mostrar:
+colapsa un cumplimiento `cleared` cuya `valid_until` ya pasó a **`expired`**, porque por regla
+de negocio **un cumplimiento vencido cuenta como no vigente**. Sin registros → `none`.
+
+**Campos opcionales: enviar `null`, no `""`.** `email` es `EmailStr | None`, así que la cadena
+vacía **falla con 422**. Aplica a `POST` y `PATCH`:
+
+```
+PATCH /suppliers/{id}  {"email": ""}    → 422
+PATCH /suppliers/{id}  {"email": null}  → 200
+```
+
+**`POST /suppliers/{id}/clearances`** — body: `{status, clearance_date?, valid_until?,
+compliance_reference?, notes?}`. `status` ∈ `cleared | pending | blocked` (**no** existe
+`expired` como valor capturable: es derivado). Las fechas van en **`"YYYY-MM-DD"`**
+(`datetime.date`); el cliente debe formatear en horario **local**, no con `toISOString()`, que
+en UTC−6 restaría un día. `created_by` lo fija el servidor con el usuario del token.
+
+**Los cumplimientos son de solo alta:** no hay `PATCH` ni `DELETE`. Corregir un registro
+equivocado significa dar de alta otro que lo supersede (el más reciente define el
+`effective_status`). El proveedor tampoco se borra: se desactiva con `status = "inactive"`.
 
 ## Conceptos (`/concepts`)
 
