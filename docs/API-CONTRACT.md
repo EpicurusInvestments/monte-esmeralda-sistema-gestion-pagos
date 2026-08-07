@@ -22,8 +22,28 @@
 
 | Método | Ruta | Propósito | Permiso |
 |---|---|---|---|
-| POST | `/auth/login` | Iniciar sesión (`{email, password}`) → token + usuario | Público |
-| GET | `/auth/me` | Usuario autenticado actual | Autenticado |
+| POST | `/auth/login` | Iniciar sesión (`{email, password}`) → `{access_token, token_type, user}` | Público |
+| GET | `/auth/me` | Usuario autenticado actual (`UserOut`) | Autenticado |
+
+La respuesta de `POST /auth/login` es `TokenResponse`: el campo del token se llama
+**`access_token`** (no `token`), `token_type` es `"bearer"` y `user` es el `UserOut`
+(`id, email, full_name, role, is_active`). El frontend guarda **`access_token`** en
+`localStorage` y lo manda como `Authorization: Bearer <access_token>`. Credenciales
+incorrectas → **401** con `{"code": "AUTHENTICATION_ERROR", ...}`.
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6...",
+  "token_type": "bearer",
+  "user": {
+    "id": "f7215c97-5211-499b-92c2-7b4db603c225",
+    "email": "admin@monteesmeralda.mx",
+    "full_name": "Administrador del Sistema",
+    "role": "admin",
+    "is_active": true
+  }
+}
+```
 
 ## Usuarios (`/users`) — solo Admin (`user:manage`)
 

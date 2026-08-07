@@ -42,8 +42,8 @@ class Settings(BaseSettings):
     storage_backend: str = "local"
     storage_dir: str = "./uploads"
 
-    # CORS — the Next.js dev server origin.
-    frontend_origin: str = "http://localhost:3000"
+    # CORS — the Vite dev server origin.
+    frontend_origin: str = "http://localhost:5173"
 
     @property
     def sqlalchemy_url(self) -> str:

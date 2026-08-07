@@ -146,3 +146,7 @@ estrategia de ambientes/despliegue.
   `DATABASE_URL` de Postgres, y el `Dockerfile` instala `libpq-dev` en vez del ODBC
   Driver 18. Local usa venv+SQLite y prod usa RDS gestionado, así que Docker se
   adaptará en un incremento propio si se decide containerizar. `[[POR LLENAR: decisión]]`
+- **Al cerrar el Frente 3 (retiro de `legacy-frontend/`):** actualizar `README.md` —hoy
+  describe el arranque del frontend Next.js en `:3000`— al flujo del frontend Vite
+  (`:5173`, `VITE_API_URL`), y revisar la referencia a `localhost:3000` en
+  `docker-compose.yml` junto con la decisión de Docker de la línea anterior.
