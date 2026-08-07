@@ -57,30 +57,24 @@ export function LoginPage() {
   };
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "1.5rem",
-      }}
-    >
-      <div style={{ width: "100%", maxWidth: 380 }}>
-        <h1 style={{ fontSize: "1.25rem", marginBottom: "0.25rem" }}>Iniciar sesión</h1>
-        <p style={{ color: "#6b7280", marginTop: 0, marginBottom: "1.5rem" }}>
-          Gestión de Pagos y Flujo de Efectivo — Monte Esmeralda
-        </p>
+    <main className="auth-wrap">
+      <div className="auth-card">
+        <div className="auth-logo">
+          MONTE<span>ESMERALDA</span>
+        </div>
+
+        <h1 className="auth-title">Iniciar sesión</h1>
+        <p className="auth-sub">Gestión de Pagos y Flujo de Efectivo</p>
 
         {formError && (
-          <div style={{ marginBottom: "1rem" }}>
+          <div className="auth-error">
             <Message severity="error" text={formError} />
           </div>
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
-          <div style={{ marginBottom: "1rem" }}>
-            <label htmlFor="email" style={{ display: "block", marginBottom: "0.375rem" }}>
+          <div className="auth-field">
+            <label className="fl fl-required" htmlFor="email">
               Correo
             </label>
             <Controller
@@ -92,6 +86,7 @@ export function LoginPage() {
                   type="email"
                   autoComplete="username"
                   invalid={!!errors.email}
+                  className="w-full"
                   style={{ width: "100%" }}
                   value={field.value}
                   onChange={field.onChange}
@@ -100,13 +95,11 @@ export function LoginPage() {
                 />
               )}
             />
-            {errors.email && (
-              <small style={{ color: "#b91c1c" }}>{errors.email.message}</small>
-            )}
+            <div className="fe">{errors.email?.message}</div>
           </div>
 
-          <div style={{ marginBottom: "1.5rem" }}>
-            <label htmlFor="password" style={{ display: "block", marginBottom: "0.375rem" }}>
+          <div className="auth-field">
+            <label className="fl fl-required" htmlFor="password">
               Contraseña
             </label>
             <Controller
@@ -128,9 +121,7 @@ export function LoginPage() {
                 />
               )}
             />
-            {errors.password && (
-              <small style={{ color: "#b91c1c" }}>{errors.password.message}</small>
-            )}
+            <div className="fe">{errors.password?.message}</div>
           </div>
 
           <Button
