@@ -1,26 +1,44 @@
 /** Router de la app (react-router-dom 6).
  *
- *  /login  → placeholder de autenticación.
- *  /       → layout (header + sidebar) con el placeholder de migración.
+ *  /login  → público (con sesión activa redirige a la home del rol).
+ *  /       → privado (RequireAuth) con el AppLayout; las pantallas cuelgan como hijas.
  *
- *  Al migrar una pantalla: crear su módulo en `src/modules/<modulo>/` y montar su ruta
- *  aquí, dentro del layout.
+ *  Al migrar una pantalla: crear su módulo en `src/modules/<modulo>/`, agregarla como hija
+ *  de "/" aquí, y sumar su ruta a `RUTAS_MONTADAS` en `shared/lib/roleHome.ts` si es una
+ *  home de rol.
+ *
+ *  Se exporta `routes` (además del router) para poder montarlo con `createMemoryRouter` en
+ *  las pruebas.
  */
 
-import { createBrowserRouter } from "react-router-dom";
+import { Outlet, createBrowserRouter } from "react-router-dom";
+import type { RouteObject } from "react-router-dom";
 
 import { AppLayout } from "@/app/AppLayout";
+import { PublicOnly, RequireAuth } from "@/app/guards";
 import { LoginPage } from "@/app/pages/LoginPage";
 import { MigrationPlaceholderPage } from "@/app/pages/MigrationPlaceholderPage";
 
-export const router = createBrowserRouter([
-  { path: "/login", element: <LoginPage /> },
+export const routes: RouteObject[] = [
+  {
+    path: "/login",
+    element: (
+      <PublicOnly>
+        <LoginPage />
+      </PublicOnly>
+    ),
+  },
   {
     path: "/",
     element: (
-      <AppLayout>
-        <MigrationPlaceholderPage />
-      </AppLayout>
+      <RequireAuth>
+        <AppLayout>
+          <Outlet />
+        </AppLayout>
+      </RequireAuth>
     ),
+    children: [{ index: true, element: <MigrationPlaceholderPage /> }],
   },
-]);
+];
+
+export const router = createBrowserRouter(routes);
