@@ -28,6 +28,10 @@ vi.mock("@/shared/lib/api", () => {
     setOnUnauthorized: vi.fn(),
     setToken: vi.fn(),
     clearToken: vi.fn(),
+    // Adjuntos: `uploadAttachment` y `downloadAttachment` son exports de nivel
+    // superior del cliente, no métodos de `api`.
+    uploadAttachment: vi.fn(),
+    downloadAttachment: vi.fn(),
     api: {
       login: vi.fn(),
       me: vi.fn(),

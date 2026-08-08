@@ -284,6 +284,58 @@ export async function uploadAttachment(
   return data as Attachment;
 }
 
+/** Descarga un adjunto y la dispara en el navegador.
+ *
+ * El endpoint exige `Authorization: Bearer`, así que un `<a href>` plano no sirve: hay que
+ * traer los bytes con fetch y crear un objectURL temporal. Se aplica el mismo manejo de 401
+ * que el resto del cliente (sesión expirada).
+ */
+export async function downloadAttachment(
+  solicitudId: string,
+  attachmentId: string,
+  fileName: string
+): Promise<void> {
+  const token = getToken();
+  let resp: Response;
+  try {
+    resp = await fetch(attachmentDownloadUrl(solicitudId, attachmentId), {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch {
+    throw new ApiError("NETWORK_ERROR", "No se pudo conectar con el servidor.", 0);
+  }
+
+  if (!resp.ok) {
+    if (resp.status === 401) handleUnauthorized();
+    let code = "ERROR";
+    let message = "No se pudo descargar el documento.";
+    try {
+      const text = await resp.text();
+      if (text) {
+        const body = JSON.parse(text) as { code?: string; message?: string };
+        code = body.code ?? code;
+        message = body.message ?? message;
+      }
+    } catch {
+      // La respuesta de error no era JSON: se queda el mensaje genérico.
+    }
+    throw new ApiError(code, message, resp.status);
+  }
+
+  const blob = await resp.blob();
+  const url = URL.createObjectURL(blob);
+  try {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 export function attachmentDownloadUrl(
   solicitudId: string,
   attachmentId: string

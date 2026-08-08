@@ -7,7 +7,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/shared/lib/api";
+import { api, uploadAttachment } from "@/shared/lib/api";
 import type { RequestType, SolicitudDetail, SolicitudListItem } from "@/shared/lib/types";
 
 import type { SolicitudFiltros } from "./types";
@@ -50,15 +50,40 @@ export function useCreateSolicitud() {
   });
 }
 
+/** Refresca SOLO el detalle de esa solicitud.
+ *
+ * Adjuntos y comentarios no se muestran en la lista, así que no hace falta reconsultarla. Y
+ * no se invalida `[SOLICITUDES_KEY]` además del detalle: como es su PREFIJO, invalidar los dos
+ * provocaría dos GET idénticos del detalle.
+ */
+function useInvalidarDetalle(id: string) {
+  const qc = useQueryClient();
+  return () => qc.invalidateQueries({ queryKey: [SOLICITUDES_KEY, "detalle", id] });
+}
+
+export function useUploadAttachment(solicitudId: string) {
+  const invalidar = useInvalidarDetalle(solicitudId);
+  return useMutation({
+    mutationFn: (file: File) => uploadAttachment(solicitudId, file),
+    onSuccess: invalidar,
+  });
+}
+
+export function useAddComment(solicitudId: string) {
+  const invalidar = useInvalidarDetalle(solicitudId);
+  return useMutation({
+    mutationFn: (body: string) => api.addComment(solicitudId, body),
+    onSuccess: invalidar,
+  });
+}
+
 export function useUpdateSolicitud() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<SolicitudCreatePayload> }) =>
       api.updateSolicitud(id, data),
-    onSuccess: (_res, vars) => {
-      // Invalida la lista y el detalle de esa solicitud.
-      qc.invalidateQueries({ queryKey: [SOLICITUDES_KEY] });
-      qc.invalidateQueries({ queryKey: [SOLICITUDES_KEY, "detalle", vars.id] });
-    },
+    // Editar cambia datos visibles en la lista (monto, proveedor, fecha), así que se invalida
+    // la raíz `[SOLICITUDES_KEY]`, que por ser prefijo alcanza también al detalle.
+    onSuccess: () => qc.invalidateQueries({ queryKey: [SOLICITUDES_KEY] }),
   });
 }
