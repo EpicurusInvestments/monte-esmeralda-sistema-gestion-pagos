@@ -55,7 +55,9 @@ export const NAV_ITEMS: NavItem[] = [
 // Landing page per role (Role Home redirect).
 export const ROLE_HOME: Record<Role, string> = {
   admin: "/admin",
-  field_admin: "/solicitudes/nueva",
+  // El Admin de Campo aterriza en la LISTA, no en el formulario en blanco: al entrar suele
+  // querer ver el estado de lo que capturó. "Capturar Solicitud" sigue a un clic en el menú.
+  field_admin: "/solicitudes",
   supervisor: "/aprobaciones",
   cfo: "/aprobaciones-financieras",
   treasurer: "/solicitudes",

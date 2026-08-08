@@ -5,15 +5,22 @@
  * (no se muestran los UUID de `*_reviewed_by`): eso lo cuenta la línea de tiempo.
  */
 
+import { useNavigate } from "react-router-dom";
+
+import { labelCumplimiento, toneCumplimiento } from "@/modules/proveedores/clearance";
+import { useAuth } from "@/shared/lib/auth";
 import {
   REQUEST_TYPE_LABELS,
   formatCurrency,
   formatDate,
   formatDateTime,
 } from "@/shared/lib/labels";
+import { canCreateSolicitud } from "@/shared/lib/nav";
 import type { SolicitudDetail } from "@/shared/lib/types";
+import { Badge } from "@/shared/ui/Badge";
 import { StatusBadge } from "@/shared/ui/StatusBadge";
 
+import { EDITABLE_STATUSES } from "../types";
 import { SolicitudTimeline } from "./SolicitudTimeline";
 
 /** Etapa del flujo: se muestra la marca de tiempo o "—" si aún no ocurrió. */
@@ -28,6 +35,17 @@ function Etapa({ label, at }: { label: string; at: string | null }) {
 
 export function SolicitudDetailPanel({ solicitud }: { solicitud: SolicitudDetail }) {
   const s = solicitud;
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Mismas tres condiciones que exige `workflow.update_solicitud`.
+  const puedeEditar =
+    !!user &&
+    EDITABLE_STATUSES.includes(s.status) &&
+    (user.id === s.captured_by || user.role === "admin") &&
+    canCreateSolicitud(user.role);
+
+  const cumplimiento = s.supplier?.clearance.effective_status;
 
   return (
     <>
@@ -40,6 +58,15 @@ export function SolicitudDetailPanel({ solicitud }: { solicitud: SolicitudDetail
               <span>{REQUEST_TYPE_LABELS[s.request_type]}</span>
             </div>
           </div>
+          {puedeEditar && (
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => navigate(`/solicitudes/${s.id}/editar`)}
+            >
+              Editar
+            </button>
+          )}
         </div>
       </div>
 
@@ -49,6 +76,22 @@ export function SolicitudDetailPanel({ solicitud }: { solicitud: SolicitudDetail
         <div className="fv">{s.supplier?.legal_name ?? "—"}</div>
         <div className="fl">RFC</div>
         <div className="fv mono">{s.supplier?.rfc ?? "—"}</div>
+        {cumplimiento && (
+          <>
+            <div className="fl">Cumplimiento del proveedor</div>
+            <div className="fv">
+              <Badge
+                tone={toneCumplimiento(cumplimiento)}
+                label={labelCumplimiento(cumplimiento)}
+              />
+              {cumplimiento !== "cleared" && (
+                <div style={{ fontSize: 11, color: "var(--amber-text)", marginTop: 4 }}>
+                  Sin cumplimiento vigente: el bloqueo se aplica en la etapa de pago.
+                </div>
+              )}
+            </div>
+          </>
+        )}
         <div className="fl">Tipo</div>
         <div className="fv">{REQUEST_TYPE_LABELS[s.request_type]}</div>
         <div className="fl">Descripción</div>

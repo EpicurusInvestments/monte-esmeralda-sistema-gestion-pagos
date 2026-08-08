@@ -14,10 +14,13 @@ import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Dropdown } from "primereact/dropdown";
 import { useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { useProveedores } from "@/modules/proveedores/hooks";
+import { useAuth } from "@/shared/lib/auth";
 import { toISODate } from "@/shared/lib/dates";
 import { REQUEST_TYPE_LABELS, formatCurrency, formatDate } from "@/shared/lib/labels";
+import { canCreateSolicitud } from "@/shared/lib/nav";
 import { StatusBadge } from "@/shared/ui/StatusBadge";
 
 import { SolicitudDetailPanel } from "../components/SolicitudDetailPanel";
@@ -26,6 +29,11 @@ import { REQUEST_TYPE_OPTIONS, STATUS_OPTIONS } from "../types";
 import type { RequestType, SolicitudFiltros, SolicitudListItem, SolicitudStatus } from "../types";
 
 export function SolicitudesPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const puedeCapturar = user ? canCreateSolicitud(user.role) : false;
+
   // Filtros server-side.
   const [status, setStatus] = useState<SolicitudStatus | null>(null);
   const [requestType, setRequestType] = useState<RequestType | null>(null);
@@ -33,7 +41,10 @@ export function SolicitudesPage() {
   const [rango, setRango] = useState<(Date | null)[] | null>(null);
   // Búsqueda local.
   const [q, setQ] = useState("");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // `?seleccion=<id>` permite volver de la captura/edición con esa solicitud abierta.
+  const [selectedId, setSelectedId] = useState<string | null>(
+    () => searchParams.get("seleccion") || null,
+  );
 
   const desde = toISODate(rango?.[0] ?? null);
   const hasta = toISODate(rango?.[1] ?? null);
@@ -105,10 +116,19 @@ export function SolicitudesPage() {
         <div>
           <div className="cat-title">Solicitudes</div>
           <div className="cat-sub">
-            Solicitudes de Pago visibles para tu rol. Vista de <strong>solo lectura</strong>:
-            la captura y las acciones de flujo llegan en incrementos posteriores.
+            Solicitudes de Pago visibles para tu rol. Se puede capturar y editar borradores;
+            las acciones de flujo llegan en el siguiente incremento.
           </div>
         </div>
+        {puedeCapturar && (
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => navigate("/solicitudes/nueva")}
+          >
+            + Nueva solicitud
+          </button>
+        )}
       </div>
 
       <div className="toolbar">
