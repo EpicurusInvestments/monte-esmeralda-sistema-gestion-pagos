@@ -150,6 +150,10 @@ Frontend (React/TS)  →  API (FastAPI routers)  →  Negocio (services)  →  D
     (la home del rol cae a `/` mientras su pantalla no exista).
   - Lo reutilizable entre módulos va a `src/shared/ui/` (p.ej. `Badge`), sin hardcodear color
     ni tipografía: todo sale de los tokens de `theme.css` (ADR-009 y el primario de marca).
+  - **`<StatusBadge>`** (`shared/ui/StatusBadge.tsx`) mapea `STATUS_LABELS` + `STATUS_TONE` de
+    `labels.ts` sobre el `<Badge>` genérico y es el **componente único** para los 8 estados de
+    la Solicitud: ninguna pantalla arma ese badge a mano ni inventa etiquetas o tonos. Si el
+    backend agrega un estado, se agrega en `labels.ts` y todas las pantallas lo toman solas.
 - **Consecuencias:** migrar una pantalla es un cambio acotado y repetible — método(s) en el
   cliente central, carpeta del módulo, ruta hija en `router.tsx` y una línea en
   `mountedRoutes.ts`. El sidebar y la redirección por rol se habilitan solos. A cambio, el

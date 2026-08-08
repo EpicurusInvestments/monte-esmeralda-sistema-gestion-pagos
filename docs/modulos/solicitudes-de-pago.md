@@ -57,6 +57,8 @@ Ver `docs/API-CONTRACT.md`, secciones **Solicitudes de Pago**, **Adjuntos**,
 
 ## Pantallas
 
+Panorama del módulo (el detalle de lo ya migrado va abajo):
+
 - **Solicitudes** (lista + detalle) — todos los roles, con visibilidad según rol.
 - **Capturar / Editar Solicitud** (form) — Admin/Campo.
 - **Bandeja de Aprobaciones** — Supervisor (`submitted`).
@@ -65,6 +67,49 @@ Ver `docs/API-CONTRACT.md`, secciones **Solicitudes de Pago**, **Adjuntos**,
 - **Administración** (usuarios) — Admin.
 - **Detalle de Solicitud:** info, adjuntos, comentarios, acciones de flujo y línea de tiempo
   de auditoría.
+
+### `/solicitudes` — **Frente 3, parte 1 de 3 (solo lectura)** ✅
+
+Migrada en `frontend/src/modules/solicitudes/`. Patrón **lista + panel de detalle**.
+
+| Zona | Contenido |
+|---|---|
+| Encabezado | Título “Solicitudes”. **Sin** botón de nueva solicitud (la captura es la parte 2) |
+| Toolbar | **Filtros server-side** (van como query params y reconsultan): estado (los 8), tipo, proveedor (Dropdown desde `listSuppliers`) y **rango de fechas de documento** (Calendar → `YYYY-MM-DD`). Además **búsqueda local** por folio o proveedor, botón “Limpiar” y contador |
+| Lista | `DataTable`: folio (mono), proveedor, tipo, concepto (`concept_label`), **monto** (MXN, alineado a la derecha), **estado** (`<StatusBadge>`) y fecha de documento |
+| Panel derecho | Detalle de **solo lectura** (abajo). Sin selección, estado vacío |
+
+Secciones del panel de detalle:
+
+1. **Encabezado** — folio (mono) + `<StatusBadge>` + tipo.
+2. **Datos** — proveedor y su RFC, tipo, descripción, monto (`formatCurrency`), semana de pago
+   propuesta, fecha de documento y vencimiento.
+3. **Concepto** — propuesto y final, mostrando el `path` completo del árbol; el final puede
+   estar sin asignar.
+4. **Flujo** — marcas de tiempo de creada / enviada / revisión del Supervisor / revisión del
+   CFO. **No** se muestran los UUID de los `*_reviewed_by`: el “quién” lo cuenta la línea de
+   tiempo.
+5. **Adjuntos** — solo lista (nombre, tipo, fecha), con aviso de que la carga y descarga
+   llegan después.
+6. **Comentarios** — solo lista (autor, fecha, texto); sin formulario para comentar.
+7. **Línea de tiempo** — los `audit_events` en **orden cronológico**, cada uno con su etiqueta
+   (`AUDIT_ACTION_LABELS`), quién (`performed_by_name`), cuándo y el motivo si existe. Es la
+   bitácora append-only del backend: solo lectura por diseño.
+
+**Visibilidad por rol: la aplica el backend**, no el frontend. `can_view_solicitud` /
+`list_solicitudes` restringen a **Tesorería** a `supervisor_approved`, `cfo_approved` y
+`deferred` (verificado: recibe 2 de 3 solicitudes y un **403** al pedir una `draft`), y al
+**Admin de Campo** a las que capturó. La pantalla pide y muestra lo que le devuelven.
+
+### Pendiente de las partes 2 y 3
+
+- **Parte 2 — captura y contenido:** alta y edición de solicitudes (`POST` / `PATCH`), **carga
+  y descarga de adjuntos** (con el adjunto obligatorio antes de enviar) y **comentar**.
+- **Parte 3 — flujo y bandejas:** acciones de flujo (enviar, asignar concepto final, aprobar
+  Supervisor, aprobar CFO, rechazar, diferir, solicitar corrección), todas a través de
+  `workflow.py`; y las bandejas **`/aprobaciones`** (Supervisor, home de su rol) y
+  **`/aprobaciones-financieras`** (CFO, home de su rol), que hoy siguen cayendo en `/` porque
+  no están montadas.
 
 ## Permisos (capacidades)
 

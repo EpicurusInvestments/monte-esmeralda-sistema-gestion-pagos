@@ -20,6 +20,7 @@ import { LoginPage } from "@/app/pages/LoginPage";
 import { MigrationPlaceholderPage } from "@/app/pages/MigrationPlaceholderPage";
 import { ConceptosPage } from "@/modules/conceptos/pages/ConceptosPage";
 import { ProveedoresPage } from "@/modules/proveedores/pages/ProveedoresPage";
+import { SolicitudesPage } from "@/modules/solicitudes/pages/SolicitudesPage";
 
 export const routes: RouteObject[] = [
   {
@@ -43,6 +44,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <MigrationPlaceholderPage /> },
       { path: "conceptos", element: <ConceptosPage /> },
       { path: "proveedores", element: <ProveedoresPage /> },
+      { path: "solicitudes", element: <SolicitudesPage /> },
     ],
   },
 ];
