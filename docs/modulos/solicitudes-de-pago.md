@@ -195,13 +195,55 @@ borran**: el backend no lo expone.
 > Con los adjuntos ya cargables queda **desbloqueado el envío a revisión**, que exige ≥1
 > adjunto. La acción de enviar es de la parte 4.
 
-### Pendiente de la parte 4
+### Acciones de flujo — **Frente 3, parte 4a de 4** ✅
 
-- **Parte 4 — flujo y bandejas:** acciones de flujo (enviar, asignar concepto final, aprobar
-  Supervisor, aprobar CFO, rechazar, diferir, solicitar corrección), todas a través de
-  `workflow.py`; y las bandejas **`/aprobaciones`** (Supervisor, home de su rol) y
-  **`/aprobaciones-financieras`** (CFO, home de su rol), que hoy siguen cayendo en `/` porque
-  no están montadas.
+En el panel de detalle, sección **Acciones** (`components/SolicitudAcciones.tsx`). Toda
+transición pasa por `services/workflow.py`: la UI **solo ofrece** lo pertinente y el backend
+revalida.
+
+Quién puede qué sale de **`availableActions()` de `nav.ts`** (el helper ya alineado con
+`permissions.py`), no de una regla nueva.
+
+#### Matriz: estado × rol → acciones
+
+| Estado | Quién | Acciones ofrecidas |
+|---|---|---|
+| `draft` · `correction_requested` | **dueño o Admin** | **Enviar a revisión** · **Cancelar** |
+| `submitted` | **Supervisor** (o Admin) | **Asignar concepto final** *(solo si aún no tiene)* · **Aprobar** · **Solicitar corrección** · **Rechazar** |
+| `supervisor_approved` | **CFO** (o Admin) | **Aprobar** · **Diferir** · **Solicitar corrección** · **Rechazar** |
+| `cfo_approved` · `deferred` · `rejected` · `cancelled` | — | **Ninguna** (estados terminales) |
+
+> **Cancelar tiene su propia regla.** `workflow.cancel` **no exige ninguna capacidad**: basta
+> ser el **dueño** (`captured_by`) o **Admin**, con el estado editable. Por eso su visibilidad
+> **no** se deriva de `canSubmit` (que además pide `solicitud:create`): alguien podría poder
+> cancelar sin poder enviar.
+
+#### Precondiciones y errores reales del backend
+
+| Acción | Precondición | Si falla |
+|---|---|---|
+| **Enviar** | **≥1 adjunto**, proveedor y monto > 0 | **422** `MISSING_REQUIRED_ATTACHMENT` |
+| **Aprobar (Supervisor)** | Concepto final, y debe ser **HOJA** | **422** `CONCEPT_REQUIRED` / `CONCEPT_MUST_BE_LEAF` |
+| **Rechazar** · **Solicitar corrección** | **Motivo obligatorio** (regla de negocio, se exige en la UI) | El diálogo no envía hasta capturarlo |
+| Cualquier acción fuera de su estado | — | **409** `INVALID_WORKFLOW_TRANSITION` |
+| Rol sin la capacidad | — | **403** `PERMISSION_DENIED` |
+
+Cómo lo refleja la UI: **Enviar** aparece deshabilitado con el aviso *«Requiere al menos un
+adjunto»* cuando no hay ninguno; **Aprobar (Supervisor)** incluye el selector de concepto
+final **solo si falta**, y ese selector ofrece **únicamente hojas activas**; los motivos
+obligatorios se validan antes de llamar. Si aun así el backend rechaza, su mensaje se muestra
+**dentro del diálogo, sin cerrarlo**, para poder corregir.
+
+**Cada acción actualiza el estado y la línea de tiempo**: al completarse se invalida la clave
+raíz `["solicitudes"]`, que por prefijo refresca lista y detalle (incluidos los
+`audit_events`). Los botones se deshabilitan mientras la petición está en curso y al terminar
+se muestra un *toast* de confirmación.
+
+### Pendiente de la parte 4b
+
+- **Bandejas por rol:** **`/aprobaciones`** (Supervisor, sobre `submitted`) y
+  **`/aprobaciones-financieras`** (CFO, sobre `supervisor_approved`). Son las home de esos dos
+  roles, que hoy siguen cayendo en `/` porque no están montadas.
 
 Es **lo único pendiente** de la pantalla de Solicitudes.
 

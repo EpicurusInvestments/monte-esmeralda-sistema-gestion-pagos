@@ -20,32 +20,16 @@ import { Message } from "primereact/message";
 import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
-import { useConceptos } from "@/modules/conceptos/hooks";
 import { labelCumplimiento, toneCumplimiento } from "@/modules/proveedores/clearance";
 import { useProveedores } from "@/modules/proveedores/hooks";
 import { ApiError } from "@/shared/lib/api";
-import type { Concept } from "@/shared/lib/types";
 import { Badge } from "@/shared/ui/Badge";
 
 import { REQUEST_TYPE_OPTIONS, SOLICITUD_FORM_DEFAULTS, solicitudSchema } from "../types";
+import { ConceptoSelect } from "./ConceptoSelect";
 import type { SolicitudFormValues } from "../types";
 
-const SECTION_LABELS: Record<string, string> = {
-  ING: "INGRESOS",
-  EGR: "EGRESOS — COSTOS",
-  GAS: "GASTOS",
-  ACT: "ACTIVOS",
-};
 
-/** Etiqueta de la hoja sin repetir el nombre de la sección (ya es el grupo). */
-function etiquetaConcepto(c: Concept): string {
-  if (c.path) {
-    const partes = c.path.split(" › ");
-    const resto = partes.slice(1).join(" › ");
-    return `${c.code} — ${resto || c.name}`;
-  }
-  return c.parent_name ? `${c.code} — ${c.name} (${c.parent_name})` : `${c.code} — ${c.name}`;
-}
 
 interface SolicitudFormProps {
   title: string;
@@ -67,8 +51,6 @@ export function SolicitudForm({
   const [formError, setFormError] = useState<string | null>(null);
 
   const proveedores = useProveedores();
-  // Solo hojas activas: son las únicas asignables (`concept_service.validate_leaf`).
-  const conceptos = useConceptos({ activeOnly: true });
 
   const {
     control,
@@ -89,17 +71,6 @@ export function SolicitudForm({
     [proveedores.data],
   );
 
-  /** Hojas agrupadas por sección, con su path (patrón del ConceptPicker heredado). */
-  const gruposConcepto = useMemo(() => {
-    const hojas = (conceptos.data ?? []).filter((c) => !c.is_header);
-    const secciones = Array.from(new Set(hojas.map((c) => c.section)));
-    return secciones.map((s) => ({
-      label: SECTION_LABELS[s] ?? s,
-      items: hojas
-        .filter((c) => c.section === s)
-        .map((c) => ({ value: c.id, label: etiquetaConcepto(c) })),
-    }));
-  }, [conceptos.data]);
 
   const submit = handleSubmit(async (data) => {
     setFormError(null);
@@ -248,21 +219,11 @@ export function SolicitudForm({
           name="proposed_concept_id"
           control={control}
           render={({ field }) => (
-            <Dropdown
+            <ConceptoSelect
               inputId="proposed_concept_id"
-              options={gruposConcepto}
-              optionLabel="label"
-              optionValue="value"
-              optionGroupLabel="label"
-              optionGroupChildren="items"
-              placeholder={
-                conceptos.isLoading ? "Cargando conceptos…" : "— Sin concepto propuesto —"
-              }
-              filter
-              showClear
-              style={{ width: "100%" }}
               value={field.value}
-              onChange={(e) => field.onChange(e.value ?? null)}
+              onChange={field.onChange}
+              placeholder="— Sin concepto propuesto —"
             />
           )}
         />

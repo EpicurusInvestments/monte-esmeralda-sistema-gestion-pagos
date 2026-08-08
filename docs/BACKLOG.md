@@ -60,6 +60,13 @@
   `lara-light-indigo` trae su indigo escrito a mano en decenas de reglas, así que `theme.css`
   solo realinea los componentes ya usados (Button, InputText, Password). Alternativa de fondo:
   compilar un tema propio de PrimeReact.
+- **Actualización optimista de las acciones de flujo.** Hoy cada transición espera la
+  respuesta y luego refetchea (los botones se deshabilitan mientras tanto). Con optimismo se
+  sentiría instantáneo, a cambio de manejar el rollback si el backend rechaza. Mejora
+  **opcional**: el flujo actual es correcto, solo menos ágil.
+- **Subir el `Toast` a un provider global.** Hoy vive dentro del panel de detalle, que es donde
+  están las acciones. Si aparecen acciones fuera de él, habrá dos instancias o avisos que no se
+  ven: **evaluar al construir las bandejas** (parte 4b).
 - **Auto-hospedar IBM Plex.** Hoy las tipografías vienen de la CDN de Google Fonts; en una red
   restringida la app cae a los fallbacks del sistema.
 - ~~**`StatusBadge` de los 8 estados de Solicitud**~~ — **hecho** en el Frente 3 (ver ADR-011):

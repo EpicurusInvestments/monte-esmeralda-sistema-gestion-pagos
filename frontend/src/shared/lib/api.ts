@@ -237,6 +237,11 @@ export const api = {
       method: "POST",
       body: { reason },
     }),
+  cancel: (id: string, reason?: string) =>
+    request<SolicitudDetail>(`/solicitudes/${id}/cancel`, {
+      method: "POST",
+      body: { reason },
+    }),
   requestCorrection: (id: string, reason?: string) =>
     request<SolicitudDetail>(`/solicitudes/${id}/request-correction`, {
       method: "POST",

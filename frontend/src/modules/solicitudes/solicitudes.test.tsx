@@ -313,21 +313,25 @@ test("cambiar el filtro de estado reconsulta al backend", async () => {
   });
 });
 
-test("las ACCIONES DE FLUJO siguen pendientes (parte 4)", async () => {
-  // El CFO de esta sesión no tiene `solicitud:create`, así que tampoco ve la captura.
+test("el panel arma sus secciones según el rol: CFO sobre una aprobada por Supervisor", async () => {
+  // La matriz completa de acciones por estado/rol se prueba en `solicitud-acciones.test.tsx`;
+  // aquí solo se comprueba que el panel las monta y respeta el rol.
   renderApp("/solicitudes");
   fireEvent.click(await screen.findByText("SP-2026-0001"));
   await waitFor(() => expect(panelDetalle().getByText("Línea de tiempo")).toBeTruthy());
 
+  // Acciones del CFO en `supervisor_approved`.
+  expect(panelDetalle().getByRole("button", { name: "Aprobar (CFO)" })).toBeTruthy();
+  expect(panelDetalle().getByRole("button", { name: "Diferir" })).toBeTruthy();
+  // …y NADA de captura ni de Supervisor: el CFO no tiene esas capacidades.
   expect(screen.queryByText("+ Nueva solicitud")).toBeNull();
-  for (const accion of [/aprobar/i, /rechazar/i, /diferir/i, /^enviar/i, /solicitar corrección/i]) {
-    expect(screen.queryByRole("button", { name: accion })).toBeNull();
-  }
-  // Adjuntos y comentarios YA existen (parte 3): descargar y comentar están disponibles para
-  // cualquier rol que vea la solicitud, aunque no pueda editarla.
+  expect(panelDetalle().queryByRole("button", { name: "Aprobar (Supervisor)" })).toBeNull();
+  expect(panelDetalle().queryByRole("button", { name: "Enviar a revisión" })).toBeNull();
+
+  // Descargar y comentar: disponibles para cualquiera que vea la solicitud…
   expect(panelDetalle().getByRole("button", { name: "Descargar" })).toBeTruthy();
   expect(panelDetalle().getByRole("button", { name: "Comentar" })).toBeTruthy();
-  // Pero el CFO no es dueño ni Admin: no puede adjuntar.
+  // …pero el CFO no es dueño ni Admin: no puede adjuntar.
   expect(panelDetalle().queryByLabelText(/^Archivo/)).toBeNull();
 });
 

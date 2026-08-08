@@ -77,6 +77,57 @@ export function useAddComment(solicitudId: string) {
   });
 }
 
+/** Fábrica de las mutations de flujo.
+ *
+ * Todas invalidan la clave RAÍZ `["solicitudes"]`: la transición cambia el estado, que sí se
+ * ve en la lista, y por ser prefijo alcanza también al detalle (una sola invalidación, sin
+ * refetches duplicados).
+ */
+function useAccionDeFlujo<TVars = void>(fn: (vars: TVars) => Promise<SolicitudDetail>) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: () => qc.invalidateQueries({ queryKey: [SOLICITUDES_KEY] }),
+  });
+}
+
+/** Enviar a revisión. Exige ≥1 adjunto, proveedor y monto > 0 (lo valida el backend). */
+export function useSubmit(id: string) {
+  return useAccionDeFlujo(() => api.submit(id));
+}
+
+/** Cancelar (dueño o Admin, desde draft o correction_requested). */
+export function useCancel(id: string) {
+  return useAccionDeFlujo((reason?: string) => api.cancel(id, reason));
+}
+
+/** Asignar el concepto final (Supervisor, desde submitted). Debe ser una HOJA. */
+export function useAssignConcept(id: string) {
+  return useAccionDeFlujo((finalConceptId: string) => api.assignConcept(id, finalConceptId));
+}
+
+export function useSupervisorApprove(id: string) {
+  return useAccionDeFlujo((v: { finalConceptId?: string; reason?: string }) =>
+    api.supervisorApprove(id, v.finalConceptId, v.reason),
+  );
+}
+
+export function useCfoApprove(id: string) {
+  return useAccionDeFlujo((reason?: string) => api.cfoApprove(id, reason));
+}
+
+export function useDefer(id: string) {
+  return useAccionDeFlujo((reason?: string) => api.defer(id, reason));
+}
+
+export function useReject(id: string) {
+  return useAccionDeFlujo((reason: string) => api.reject(id, reason));
+}
+
+export function useRequestCorrection(id: string) {
+  return useAccionDeFlujo((reason: string) => api.requestCorrection(id, reason));
+}
+
 export function useUpdateSolicitud() {
   const qc = useQueryClient();
   return useMutation({
