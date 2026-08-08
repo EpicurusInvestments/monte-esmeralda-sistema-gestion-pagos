@@ -14,12 +14,12 @@ import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { InputTextarea } from "primereact/inputtextarea";
 import { Message } from "primereact/message";
-import { Toast } from "primereact/toast";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import { ApiError } from "@/shared/lib/api";
 import { useAuth } from "@/shared/lib/auth";
 import { availableActions } from "@/shared/lib/nav";
+import { useToast } from "@/shared/ui/toast";
 import type { SolicitudDetail } from "@/shared/lib/types";
 
 import { EDITABLE_STATUSES } from "../types";
@@ -141,7 +141,7 @@ const CONFIG: Record<Clave, Config> = {
 export function SolicitudAcciones({ solicitud }: { solicitud: SolicitudDetail }) {
   const s = solicitud;
   const { user } = useAuth();
-  const toast = useRef<Toast>(null);
+  const avisos = useToast();
 
   const [abierta, setAbierta] = useState<Clave | null>(null);
   const [motivo, setMotivo] = useState("");
@@ -259,7 +259,7 @@ export function SolicitudAcciones({ solicitud }: { solicitud: SolicitudDetail })
           await corregir.mutateAsync(texto);
           break;
       }
-      toast.current?.show({ severity: "success", summary: cfg.exito, life: 3000 });
+      avisos.exito(cfg.exito);
       cerrar();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo completar la acción.");
@@ -268,9 +268,7 @@ export function SolicitudAcciones({ solicitud }: { solicitud: SolicitudDetail })
 
   return (
     <>
-      <Toast ref={toast} />
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      <div className="acciones-flujo" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         {disponibles.map((clave) => {
           const c = CONFIG[clave];
           // Enviar sin adjuntos: el backend lo rechaza, así que se avisa antes.

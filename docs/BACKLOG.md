@@ -64,9 +64,20 @@
   respuesta y luego refetchea (los botones se deshabilitan mientras tanto). Con optimismo se
   sentiría instantáneo, a cambio de manejar el rollback si el backend rechaza. Mejora
   **opcional**: el flujo actual es correcto, solo menos ágil.
-- **Subir el `Toast` a un provider global.** Hoy vive dentro del panel de detalle, que es donde
-  están las acciones. Si aparecen acciones fuera de él, habrá dos instancias o avisos que no se
-  ven: **evaluar al construir las bandejas** (parte 4b).
+- ~~**Subir el `Toast` a un provider global**~~ — **hecho** al construir las bandejas
+  (parte 4b): vive en `shared/ui/toast` (`ToastProvider` + `useToast()`) montado en la raíz. Se
+  descubrió además que la versión instalada de PrimeReact **no posiciona el Toast por CSS**, así
+  que `theme.css` le fija `position: fixed` y su esquina de forma explícita.
+- **Contador de pendientes en las entradas del sidebar.** Las bandejas no muestran cuántas
+  solicitudes esperan; el patrón de pantalla ya trae la clase `.side-count` portada de GRC-OIR
+  para eso. Mejora **opcional**.
+- **Paginación y orden por columna en las listas de Solicitudes.** Las tres vistas
+  (`/solicitudes` y las dos bandejas) traen todo y ordenan por lo que devuelve el backend
+  (`created_at` descendente). La paginación depende del endurecimiento del backend (ver arriba);
+  el orden por columna se solapa con el ítem del `TreeTable`/orden de más arriba.
+- **Ocultar la columna «Estado» en las bandejas.** Es redundante: por definición todas las filas
+  comparten el mismo estado. Se dejó visible para no meter lógica condicional en la tabla.
+  Mejora **cosmética**.
 - **Auto-hospedar IBM Plex.** Hoy las tipografías vienen de la CDN de Google Fonts; en una red
   restringida la app cae a los fallbacks del sistema.
 - ~~**`StatusBadge` de los 8 estados de Solicitud**~~ — **hecho** en el Frente 3 (ver ADR-011):

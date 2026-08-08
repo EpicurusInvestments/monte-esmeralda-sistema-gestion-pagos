@@ -12,6 +12,8 @@ export const RUTAS_MONTADAS: readonly string[] = [
   "/proveedores",
   "/solicitudes",
   "/solicitudes/nueva",
+  "/aprobaciones",
+  "/aprobaciones-financieras",
 ];
 
 export function estaMontada(ruta: string): boolean {

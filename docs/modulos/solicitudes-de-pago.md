@@ -239,13 +239,56 @@ raíz `["solicitudes"]`, que por prefijo refresca lista y detalle (incluidos los
 `audit_events`). Los botones se deshabilitan mientras la petición está en curso y al terminar
 se muestra un *toast* de confirmación.
 
-### Pendiente de la parte 4b
+### Bandejas por rol — **Frente 3, parte 4b de 4** ✅
 
-- **Bandejas por rol:** **`/aprobaciones`** (Supervisor, sobre `submitted`) y
-  **`/aprobaciones-financieras`** (CFO, sobre `supervisor_approved`). Son las home de esos dos
-  roles, que hoy siguen cayendo en `/` porque no están montadas.
+Son las **pantallas de inicio** del Supervisor y del CFO (`ROLE_HOME` en `nav.ts`):
 
-Es **lo único pendiente** de la pantalla de Solicitudes.
+| Ruta | Rol | Estado fijo | Acciones del detalle |
+|---|---|---|---|
+| **`/aprobaciones`** — Bandeja de Aprobaciones | Supervisor (o Admin) | `submitted` | Asignar concepto final · Aprobar · Solicitar corrección · Rechazar |
+| **`/aprobaciones-financieras`** — Aprobaciones Financieras | CFO (o Admin) | `supervisor_approved` | Aprobar · Diferir · Solicitar corrección · Rechazar |
+
+**No son una pantalla nueva:** las tres vistas de Solicitudes comparten
+`components/SolicitudesWorkspace.tsx` (lista + panel de detalle + acciones) y se diferencian
+solo por props. En una bandeja el estado va **fijo**, así que **no** se ofrece el filtro de
+estado (no tendría sentido cambiarlo) ni el botón **«+ Nueva solicitud»**; el contador muestra
+los **pendientes** y la lista vacía dice *«No hay solicitudes pendientes en esta bandeja»*. La
+búsqueda local por folio o proveedor sí está.
+
+El filtro es **server-side**: cada bandeja llama al mismo `GET /solicitudes` con su `status`.
+
+#### El relevo entre etapas
+
+Al actuar, la solicitud **cambia de estado y sale de la bandeja**, porque la lista se
+reconsulta (invalidación de `["solicitudes"]`). Verificado contra el backend:
+
+```
+supervisor-approve → sale de /aprobaciones          (0 filas)
+                   → APARECE en /aprobaciones-financieras (1 fila)
+cfo-approve        → sale de /aprobaciones-financieras (0 filas)
+                     y la solicitud sigue existiendo, en cfo_approved
+```
+
+Si la solicitud **seleccionada** ya salió de la bandeja, el panel de detalle lo **avisa**
+(«Esta solicitud ya salió de la bandeja: cambió de estado y le toca a otra etapa») con un botón
+para cerrarlo, en vez de seguir mostrando un detalle que ya no aplica a esa bandeja.
+
+Los avisos de éxito de las acciones salen del **`ToastProvider` global** (`shared/ui/toast`),
+no del panel: así se ven igual desde cualquier pantalla.
+
+### Estado de la pantalla de Solicitudes: **completa** ✅
+
+| Parte | Alcance | Estado |
+|---|---|---|
+| 1 | Lista + detalle + línea de tiempo (solo lectura) | ✅ |
+| 2 | Captura y edición | ✅ |
+| 3 | Adjuntos y comentarios | ✅ |
+| 4a | Acciones de flujo | ✅ |
+| 4b | Bandejas de Supervisor y CFO | ✅ |
+
+Las mejoras opcionales que quedaron anotadas (paginación, orden por columna, contador de
+pendientes en el sidebar) están en [`docs/BACKLOG.md`](../BACKLOG.md); no son alcance de este
+módulo.
 
 ## Permisos (capacidades)
 
