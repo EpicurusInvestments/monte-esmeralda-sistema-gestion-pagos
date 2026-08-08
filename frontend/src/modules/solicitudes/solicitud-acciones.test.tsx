@@ -253,6 +253,9 @@ test("enviar sin adjuntos está deshabilitado y avisa por qué", async () => {
   const boton = panelDetalle().getByRole("button", { name: "Enviar a revisión" });
   expect(boton).toHaveProperty("disabled", true);
   expect(boton.getAttribute("title")).toBe("Requiere al menos un adjunto");
+  // El motivo va TAMBIÉN en el envoltorio: un `button[disabled]` no dispara eventos de ratón,
+  // así que su propio `title` no se muestra de forma confiable.
+  expect(boton.parentElement?.getAttribute("title")).toBe("Requiere al menos un adjunto");
   expect(panelDetalle().getByText(/hace falta al menos un adjunto/i)).toBeTruthy();
 });
 
