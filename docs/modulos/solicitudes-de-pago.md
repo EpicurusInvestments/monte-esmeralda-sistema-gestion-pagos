@@ -89,9 +89,9 @@ Secciones del panel de detalle:
 4. **Flujo** — marcas de tiempo de creada / enviada / revisión del Supervisor / revisión del
    CFO. **No** se muestran los UUID de los `*_reviewed_by`: el “quién” lo cuenta la línea de
    tiempo.
-5. **Adjuntos** — solo lista (nombre, tipo, fecha), con aviso de que la carga y descarga
-   llegan después.
-6. **Comentarios** — solo lista (autor, fecha, texto); sin formulario para comentar.
+5. **Adjuntos** — nombre, tipo y fecha. *(La descarga y la carga se agregaron en la parte 3.)*
+6. **Comentarios** — autor, fecha y texto. *(El formulario para comentar se agregó en la
+   parte 3.)*
 7. **Línea de tiempo** — los `audit_events` en **orden cronológico**, cada uno con su etiqueta
    (`AUDIT_ACTION_LABELS`), quién (`performed_by_name`), cuándo y el motivo si existe. Es la
    bitácora append-only del backend: solo lectura por diseño.
@@ -150,15 +150,60 @@ formulario en blanco (`ROLE_HOME` en `nav.ts`).
 > llega en la **parte 3**, así que hasta entonces una solicitud capturada desde la UI **no se
 > puede enviar todavía**: se queda en borrador.
 
-### Pendiente de las partes 3 y 4
+### Adjuntos y comentarios — **Frente 3, parte 3 de 4** ✅
 
-- **Parte 3 — adjuntos y comentarios:** **carga y descarga de adjuntos** (desbloquea el envío,
-  que exige ≥1 adjunto) y **comentar**.
+Ambas secciones viven **dentro del panel de detalle**, en componentes propios
+(`components/SolicitudAdjuntos.tsx` y `components/SolicitudComentarios.tsx`).
+
+#### Adjuntos
+
+**Descargar** lo puede **cualquier rol que vea la solicitud** (`can_view_solicitud`;
+verificado con Admin de Campo, Contabilidad y Supervisor). El endpoint exige
+`Authorization: Bearer`, así que **un `<a href>` plano no funciona**: el helper
+`downloadAttachment` de `shared/lib/api.ts` trae los bytes con `fetch` + token, arma un
+`objectURL` con el blob y dispara la descarga con un `<a download>` temporal, usando el nombre
+del archivo. El backend responde los bytes con
+`Content-Disposition: attachment; filename="…"`. Sin token → **401**.
+
+**Cargar** requiere las tres condiciones de `attachments.upload_attachment`:
+
+| Condición | Detalle |
+|---|---|
+| Capacidad | `solicitud:upload` (**admin** y **field_admin**) |
+| Autoría | ser el **dueño** (`captured_by`) o **Admin** |
+| Estado | **`draft`** o **`correction_requested`** |
+
+Si el estado ya no lo permite, el backend responde **409**
+(`INVALID_WORKFLOW_TRANSITION`) y el mensaje se muestra en el panel. Cuando alguna condición
+falta, el control de carga **no se pinta** (la descarga y los comentarios siguen disponibles).
+
+> **Guarda de cortesía en el cliente:** se rechazan archivos **> 15 MB** y se limita a PDF,
+> imágenes y documentos de Office, para dar un mensaje claro antes de gastar la subida. **No es
+> la validación definitiva:** el backend todavía no valida tamaño ni tipo (ver
+> [`docs/BACKLOG.md`](../BACKLOG.md)). Cuando lo haga, su respuesta manda.
+
+Se sube **un archivo a la vez**, sin barra de progreso. Al terminar se refresca el detalle.
+
+#### Comentarios
+
+**Cualquiera que vea la solicitud puede comentar** — no hace falta capacidad especial
+(`comments.create_comment` solo valida `can_view_solicitud`) y **no depende del estado**: se
+puede comentar una solicitud ya enviada o aprobada (verificado: comentar en `submitted` → 201).
+El campo se limpia al guardar y el detalle se refresca. Los comentarios **no se editan ni se
+borran**: el backend no lo expone.
+
+> Con los adjuntos ya cargables queda **desbloqueado el envío a revisión**, que exige ≥1
+> adjunto. La acción de enviar es de la parte 4.
+
+### Pendiente de la parte 4
+
 - **Parte 4 — flujo y bandejas:** acciones de flujo (enviar, asignar concepto final, aprobar
   Supervisor, aprobar CFO, rechazar, diferir, solicitar corrección), todas a través de
   `workflow.py`; y las bandejas **`/aprobaciones`** (Supervisor, home de su rol) y
   **`/aprobaciones-financieras`** (CFO, home de su rol), que hoy siguen cayendo en `/` porque
   no están montadas.
+
+Es **lo único pendiente** de la pantalla de Solicitudes.
 
 ## Permisos (capacidades)
 

@@ -29,6 +29,10 @@ vi.mock("@/shared/lib/api", () => {
     setOnUnauthorized: vi.fn(),
     setToken: vi.fn(),
     clearToken: vi.fn(),
+    // Adjuntos: `uploadAttachment` y `downloadAttachment` son exports de nivel
+    // superior del cliente, no métodos de `api`.
+    uploadAttachment: vi.fn(),
+    downloadAttachment: vi.fn(),
     api: {
       login: vi.fn(),
       me: vi.fn(),
@@ -228,7 +232,9 @@ test("sin clearance:create no aparece el form inline, aunque sí se pueda editar
 
   expect(await screen.findByText("+ Nuevo proveedor")).toBeTruthy();
 
-  fireEvent.click(screen.getByText("Aceros del Bajío S.A. de C.V."));
+  // Se espera la FILA, no solo el encabezado: este se pinta de inmediato y la lista llega
+  // después (cada prueba arranca con caché limpia).
+  fireEvent.click(await screen.findByText("Aceros del Bajío S.A. de C.V."));
   await waitFor(() => expect(panelDetalle().getByText("Cumplimiento (1)")).toBeTruthy());
 
   // Puede editar el proveedor…

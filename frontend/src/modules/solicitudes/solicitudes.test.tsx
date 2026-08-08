@@ -28,6 +28,10 @@ vi.mock("@/shared/lib/api", () => {
     setOnUnauthorized: vi.fn(),
     setToken: vi.fn(),
     clearToken: vi.fn(),
+    // Adjuntos: `uploadAttachment` y `downloadAttachment` son exports de nivel
+    // superior del cliente, no métodos de `api`.
+    uploadAttachment: vi.fn(),
+    downloadAttachment: vi.fn(),
     api: {
       login: vi.fn(),
       me: vi.fn(),
@@ -309,18 +313,22 @@ test("cambiar el filtro de estado reconsulta al backend", async () => {
   });
 });
 
-test("este incremento es de solo lectura: sin captura ni acciones de flujo", async () => {
+test("las ACCIONES DE FLUJO siguen pendientes (parte 4)", async () => {
+  // El CFO de esta sesión no tiene `solicitud:create`, así que tampoco ve la captura.
   renderApp("/solicitudes");
   fireEvent.click(await screen.findByText("SP-2026-0001"));
   await waitFor(() => expect(panelDetalle().getByText("Línea de tiempo")).toBeTruthy());
 
-  // Ni botón de nueva solicitud…
   expect(screen.queryByText("+ Nueva solicitud")).toBeNull();
-  // …ni acciones de flujo, comentar o descargar.
-  for (const accion of [/aprobar/i, /rechazar/i, /diferir/i, /enviar/i, /comentar/i, /descargar/i]) {
+  for (const accion of [/aprobar/i, /rechazar/i, /diferir/i, /^enviar/i, /solicitar corrección/i]) {
     expect(screen.queryByRole("button", { name: accion })).toBeNull();
   }
-  expect(panelDetalle().getByText(/próximo incremento/)).toBeTruthy();
+  // Adjuntos y comentarios YA existen (parte 3): descargar y comentar están disponibles para
+  // cualquier rol que vea la solicitud, aunque no pueda editarla.
+  expect(panelDetalle().getByRole("button", { name: "Descargar" })).toBeTruthy();
+  expect(panelDetalle().getByRole("button", { name: "Comentar" })).toBeTruthy();
+  // Pero el CFO no es dueño ni Admin: no puede adjuntar.
+  expect(panelDetalle().queryByLabelText(/^Archivo/)).toBeNull();
 });
 
 test("el sidebar enlaza Solicitudes y lo marca activo", async () => {

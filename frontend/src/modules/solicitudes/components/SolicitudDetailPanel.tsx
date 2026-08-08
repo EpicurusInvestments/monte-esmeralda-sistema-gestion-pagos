@@ -21,6 +21,8 @@ import { Badge } from "@/shared/ui/Badge";
 import { StatusBadge } from "@/shared/ui/StatusBadge";
 
 import { EDITABLE_STATUSES } from "../types";
+import { SolicitudAdjuntos } from "./SolicitudAdjuntos";
+import { SolicitudComentarios } from "./SolicitudComentarios";
 import { SolicitudTimeline } from "./SolicitudTimeline";
 
 /** Etapa del flujo: se muestra la marca de tiempo o "—" si aún no ocurrió. */
@@ -44,6 +46,11 @@ export function SolicitudDetailPanel({ solicitud }: { solicitud: SolicitudDetail
     EDITABLE_STATUSES.includes(s.status) &&
     (user.id === s.captured_by || user.role === "admin") &&
     canCreateSolicitud(user.role);
+
+  // Adjuntar: mismas condiciones que `attachments.upload_attachment` (solicitud:upload +
+  // dueño/Admin + estado adjuntable). `canCreateSolicitud` cubre el mismo conjunto de roles
+  // que `solicitud:upload` (admin y field_admin).
+  const puedeAdjuntar = puedeEditar;
 
   const cumplimiento = s.supplier?.clearance.effective_status;
 
@@ -125,40 +132,14 @@ export function SolicitudDetailPanel({ solicitud }: { solicitud: SolicitudDetail
         <Etapa label="Revisión del CFO" at={s.cfo_reviewed_at} />
 
         <div className="sec">Adjuntos ({s.attachments.length})</div>
-        <div className="fv muted" style={{ fontSize: 11 }}>
-          Descarga y carga de adjuntos: en un próximo incremento.
-        </div>
-        {s.attachments.length === 0 ? (
-          <div className="fv muted">Sin adjuntos.</div>
-        ) : (
-          s.attachments.map((a) => (
-            <div className="rel-item" key={a.id}>
-              <div>
-                <div className="rel-name">{a.file_name}</div>
-                <div className="rel-sub">
-                  {a.content_type ?? "tipo desconocido"} · {formatDateTime(a.uploaded_at)}
-                </div>
-              </div>
-            </div>
-          ))
-        )}
+        <SolicitudAdjuntos
+          solicitudId={s.id}
+          attachments={s.attachments}
+          canUpload={puedeAdjuntar}
+        />
 
         <div className="sec">Comentarios ({s.comments.length})</div>
-        {s.comments.length === 0 ? (
-          <div className="fv muted">Sin comentarios.</div>
-        ) : (
-          s.comments.map((c) => (
-            <div className="rel-item" key={c.id}>
-              <div>
-                <div className="rel-name">{c.author_name ?? "—"}</div>
-                <div className="rel-sub">{formatDateTime(c.created_at)}</div>
-                <div className="fv" style={{ marginTop: 4, marginBottom: 0 }}>
-                  {c.body}
-                </div>
-              </div>
-            </div>
-          ))
-        )}
+        <SolicitudComentarios solicitudId={s.id} comments={s.comments} />
 
         <div className="sec">Línea de tiempo</div>
         <SolicitudTimeline events={s.audit_events} />

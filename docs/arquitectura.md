@@ -154,6 +154,15 @@ Frontend (React/TS)  →  API (FastAPI routers)  →  Negocio (services)  →  D
     `labels.ts` sobre el `<Badge>` genérico y es el **componente único** para los 8 estados de
     la Solicitud: ninguna pantalla arma ese badge a mano ni inventa etiquetas o tonos. Si el
     backend agrega un estado, se agrega en `labels.ts` y todas las pantallas lo toman solas.
+- **Prácticas afinadas al migrar Solicitudes** (aplican a todo el frontend):
+  - **Un `QueryClient` por instancia, no un singleton de módulo.** Se crea con
+    `useState(crearQueryClient)` dentro de `Providers`. Un cliente a nivel de módulo comparte la
+    caché entre raíces de React (y, en pruebas, entre casos, generando dependencias de orden).
+  - **Invalidación sin solapamiento de prefijos.** Las claves de TanStack Query se invalidan por
+    prefijo, así que invalidar `["solicitudes"]` **ya alcanza** a
+    `["solicitudes","detalle",id]`: hacer las dos cosas dispara **refetches duplicados**. Se usa
+    la clave más específica que corresponda al cambio — solo el detalle cuando lo que cambió no
+    se ve en la lista (adjuntos, comentarios), y la raíz cuando sí (monto, estado, proveedor).
 - **Consecuencias:** migrar una pantalla es un cambio acotado y repetible — método(s) en el
   cliente central, carpeta del módulo, ruta hija en `router.tsx` y una línea en
   `mountedRoutes.ts`. El sidebar y la redirección por rol se habilitan solos. A cambio, el
