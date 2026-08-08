@@ -55,8 +55,18 @@
   compilar un tema propio de PrimeReact.
 - **Auto-hospedar IBM Plex.** Hoy las tipografías vienen de la CDN de Google Fonts; en una red
   restringida la app cae a los fallbacks del sistema.
-- **`StatusBadge` de los 8 estados de Solicitud**, encima del `Badge` genérico de
-  `shared/ui/`, tomando etiqueta y tono de `labels.ts`. Se hará al migrar Solicitudes.
+- ~~**`StatusBadge` de los 8 estados de Solicitud**~~ — **hecho** en el Frente 3 (ver ADR-011):
+  `shared/ui/StatusBadge.tsx` sobre el `Badge` genérico, con etiqueta y tono de `labels.ts`.
+- **Mostrar el badge de cumplimiento del proveedor en el detalle de la Solicitud.** Es una
+  advertencia útil al capturar (el cumplimiento vencido no bloquea en el Paquete 1, pero
+  conviene verlo). *Se atenderá en la parte 2 de Solicitudes.*
+- **Nota ambiental — las pruebas necesitan RAM suficiente.** `vitest` monta un jsdom por
+  archivo con PrimeReact (que inyecta su CSS en tiempo de ejecución), así que con la máquina
+  saturada puede abortar con `Worker exited unexpectedly` o `spawn UNKNOWN` (errno −4094) al no
+  poder crear procesos. **No es un fallo del proyecto**: con memoria disponible el suite pasa
+  completo. Si aparece, libera memoria (navegadores, IDE) en lugar de tocar la config de
+  Vitest, que quedó a propósito en sus **defaults** para no penalizar al CI ni al resto del
+  equipo.
 
 ## Cierre del Frente 3 (limpieza)
 

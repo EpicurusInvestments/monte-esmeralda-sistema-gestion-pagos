@@ -95,17 +95,9 @@ export const CUMPLIMIENTO_FORM_DEFAULTS: CumplimientoFormValues = {
   notes: "",
 };
 
-/** Fecha → "YYYY-MM-DD" en horario LOCAL.
- *
- * No se usa `toISOString()` a propósito: convierte a UTC y en México (UTC-6) una fecha
- * elegida en el calendario se guardaría con un día menos.
- */
-export function toISODate(d: Date | null): string | null {
-  if (!d) return null;
-  const mes = String(d.getMonth() + 1).padStart(2, "0");
-  const dia = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${mes}-${dia}`;
-}
+/** Fecha → "YYYY-MM-DD" en horario local. Vive en `shared/lib/dates` porque también lo
+ *  usan los filtros de Solicitudes; se re-exporta para no cambiar los imports existentes. */
+export { toISODate } from "@/shared/lib/dates";
 
 /** Texto vacío → null (el backend distingue "" de ausente; `EmailStr` rechaza ""). */
 export function vacioANull(v: string | undefined): string | null {
