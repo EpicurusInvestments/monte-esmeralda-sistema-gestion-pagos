@@ -62,12 +62,36 @@
   --mono: "IBM Plex Mono", "SF Mono", "Consolas", monospace;
 }
 
+/* ── Reset ACOTADO ────────────────────────────────────────────────────────────
+ * Un `* { margin: 0; padding: 0 }` NO sirve aquí: todo el CSS de PrimeReact vive dentro de
+ * `@layer primereact`, y en la cascada los estilos SIN capa le ganan a los que están en una
+ * capa, sin importar la especificidad. Es decir, un reset universal sin capa le borraba el
+ * padding y los márgenes a TODOS los componentes de la librería (contenido de los Dialog
+ * pegado al borde, ícono del Password sin su `margin-top`, ítems de Dropdown sin aire…).
+ *
+ * Por eso el reset solo toca elementos HTML de texto, nunca componentes. Tampoco se resetea
+ * `ul`/`ol` en global: las listas propias (`.timeline`, sidebar) fijan su padding, y hacerlo
+ * global rompería los paneles de Dropdown y los menús.
+ * ────────────────────────────────────────────────────────────────────────── */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+figure,
+blockquote,
+dl,
+dd {
   margin: 0;
-  padding: 0;
 }
 
 html,
@@ -111,6 +135,13 @@ body {
 .p-button:focus,
 .p-button:focus-visible {
   box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary-border);
+}
+/* Deshabilitado: lara solo baja la opacidad; falta comunicarlo con el cursor. Cubre los
+ * botones de PrimeReact que se deshabilitan por estado del formulario («Subir» sin archivo,
+ * «Comentar» con el campo vacío, cualquier submit en curso). */
+.p-button:disabled,
+.p-button.p-disabled {
+  cursor: not-allowed;
 }
 .p-button.p-button-outlined,
 .p-button.p-button-text {
@@ -774,6 +805,44 @@ body {
 }
 .btn-danger:hover {
   background: #f8dede;
+}
+
+/* Estado deshabilitado: tiene que VERSE bloqueado, no solo estarlo.
+ * El `:hover` de CSS sí matchea un `button[disabled]`, así que hay que neutralizarlo
+ * explícitamente o el botón insinúa que se puede clicar. */
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn:disabled:hover {
+  background: transparent;
+}
+.btn-primary:disabled:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.btn-danger:disabled:hover {
+  background: var(--red-bg);
+}
+
+/* ── Modales (Dialog) ─────────────────────────────────────────────────────────
+ * Se fija el espaciado con el token del patrón (`--pane-pad`) para que todos los modales
+ * respiren igual y en la misma medida que el resto de la app. El ancho lo sigue poniendo cada
+ * diálogo (inline) y no cambia: con `box-sizing: border-box` el padding va hacia dentro.
+ * ────────────────────────────────────────────────────────────────────────── */
+.p-dialog .p-dialog-header {
+  padding: 16px var(--pane-pad) 12px;
+}
+.p-dialog .p-dialog-content {
+  padding: 0 var(--pane-pad) 18px;
+}
+.p-dialog .p-dialog-footer {
+  padding: 12px var(--pane-pad) 18px;
+  /* Los botones no quedan pegados entre sí ni al borde, aunque el diálogo no los envuelva. */
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--border);
 }
 
 /* ── Avisos (Toast) ───────────────────────────────────────────────────────────

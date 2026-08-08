@@ -273,17 +273,28 @@ export function SolicitudAcciones({ solicitud }: { solicitud: SolicitudDetail })
           const c = CONFIG[clave];
           // Enviar sin adjuntos: el backend lo rechaza, así que se avisa antes.
           const bloqueado = clave === "submit" && sinAdjuntos;
-          return (
+          const motivoBloqueo = bloqueado ? "Requiere al menos un adjunto" : undefined;
+          const boton = (
             <button
-              key={clave}
               type="button"
               className={`btn btn-sm${c.danger ? " btn-danger" : ""}`}
               disabled={bloqueado || enCurso}
-              title={bloqueado ? "Requiere al menos un adjunto" : undefined}
+              title={motivoBloqueo}
               onClick={() => abrir(clave)}
             >
               {c.label}
             </button>
+          );
+          // Un `button[disabled]` no dispara eventos de ratón, así que su propio `title` no
+          // se muestra de forma confiable: el motivo va también en un envoltorio.
+          return bloqueado ? (
+            <span key={clave} title={motivoBloqueo} style={{ display: "inline-flex" }}>
+              {boton}
+            </span>
+          ) : (
+            <span key={clave} style={{ display: "inline-flex" }}>
+              {boton}
+            </span>
           );
         })}
       </div>
