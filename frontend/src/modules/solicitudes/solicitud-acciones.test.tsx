@@ -167,14 +167,12 @@ async function abrirDetalle(user: User, over: Partial<SolicitudDetail> = {}) {
   await waitFor(() => expect(panelDetalle().getByText("Acciones")).toBeTruthy());
 }
 
-/** Etiquetas de los botones de la sección Acciones. */
+/** Etiquetas de los botones de la sección Acciones (ancladas a su clase, no a su posición). */
 function accionesVisibles(): string[] {
-  const sec = Array.from(document.querySelectorAll(".detail-pane .sec")).find(
-    (e) => e.textContent === "Acciones",
+  const cont = document.querySelector(".detail-pane .acciones-flujo");
+  return Array.from(cont?.querySelectorAll("button") ?? []).map(
+    (b) => b.textContent?.trim() ?? "",
   );
-  const cont = sec?.nextElementSibling?.nextElementSibling; // Toast va primero
-  const desde = cont?.querySelectorAll("button") ?? [];
-  return Array.from(desde).map((b) => b.textContent?.trim() ?? "");
 }
 
 beforeEach(() => {

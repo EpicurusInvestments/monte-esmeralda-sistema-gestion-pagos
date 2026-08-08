@@ -776,6 +776,20 @@ body {
   background: #f8dede;
 }
 
+/* ── Avisos (Toast) ───────────────────────────────────────────────────────────
+ * La versión instalada de PrimeReact NO posiciona el Toast por CSS (su tema solo le pone
+ * `opacity: 1` y los estilos que inyecta, el ancho). Se fija aquí de forma explícita para que
+ * el aviso flote sobre la pantalla y no lo recorte ningún contenedor con `overflow: hidden`.
+ * ────────────────────────────────────────────────────────────────────────── */
+.p-toast {
+  position: fixed;
+  z-index: 1100;
+}
+.p-toast.p-toast-top-right {
+  top: 68px; /* debajo del header (52px) */
+  right: 20px;
+}
+
 /* ── Línea de tiempo (bitácora de auditoría de una Solicitud) ────────────── */
 .timeline {
   list-style: none;

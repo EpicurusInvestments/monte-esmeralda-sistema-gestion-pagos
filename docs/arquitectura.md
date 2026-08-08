@@ -164,6 +164,14 @@ Frontend (React/TS)  →  API (FastAPI routers)  →  Negocio (services)  →  D
     acción. Agregar una transición es una entrada más. El selector de concepto
     (`ConceptoSelect`: solo hojas, agrupadas por sección y con su `path`) se **comparte** entre
     la captura (concepto propuesto) y la aprobación del Supervisor (concepto final).
+  - **Una pantalla configurable en vez de varias parecidas.** `SolicitudesWorkspace` concentra
+    el patrón lista + panel de detalle + acciones, y se configura por props: la lista completa
+    (todos los estados, filtros y captura) y las **bandejas** por rol (estado fijo, sin filtro
+    de estado ni captura) son la misma pantalla con distinta configuración, no tres copias.
+  - **Los avisos (`Toast`) viven en un provider global** (`shared/ui/toast`, con `useToast()`).
+    El `Toast` de PrimeReact se renderiza donde se monta (`appendTo: "self"`) y la versión
+    instalada **no lo posiciona por CSS**, así que dentro de un panel con `overflow: hidden`
+    quedaría recortado: se monta en la raíz y `theme.css` le fija la posición explícitamente.
   - **Invalidación sin solapamiento de prefijos.** Las claves de TanStack Query se invalidan por
     prefijo, así que invalidar `["solicitudes"]` **ya alcanza** a
     `["solicitudes","detalle",id]`: hacer las dos cosas dispara **refetches duplicados**. Se usa

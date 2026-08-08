@@ -20,6 +20,8 @@ import { LoginPage } from "@/app/pages/LoginPage";
 import { MigrationPlaceholderPage } from "@/app/pages/MigrationPlaceholderPage";
 import { ConceptosPage } from "@/modules/conceptos/pages/ConceptosPage";
 import { ProveedoresPage } from "@/modules/proveedores/pages/ProveedoresPage";
+import { AprobacionesFinancierasPage } from "@/modules/solicitudes/pages/AprobacionesFinancierasPage";
+import { BandejaAprobacionesPage } from "@/modules/solicitudes/pages/BandejaAprobacionesPage";
 import { SolicitudEditarPage } from "@/modules/solicitudes/pages/SolicitudEditarPage";
 import { SolicitudNuevaPage } from "@/modules/solicitudes/pages/SolicitudNuevaPage";
 import { SolicitudesPage } from "@/modules/solicitudes/pages/SolicitudesPage";
@@ -49,6 +51,8 @@ export const routes: RouteObject[] = [
       { path: "solicitudes", element: <SolicitudesPage /> },
       { path: "solicitudes/nueva", element: <SolicitudNuevaPage /> },
       { path: "solicitudes/:id/editar", element: <SolicitudEditarPage /> },
+      { path: "aprobaciones", element: <BandejaAprobacionesPage /> },
+      { path: "aprobaciones-financieras", element: <AprobacionesFinancierasPage /> },
     ],
   },
 ];

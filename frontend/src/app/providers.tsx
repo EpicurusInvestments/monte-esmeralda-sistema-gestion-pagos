@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 
 import { AuthProvider } from "@/shared/lib/auth";
+import { ToastProvider } from "@/shared/ui/toast";
 
 function crearQueryClient() {
   return new QueryClient({
@@ -24,7 +25,9 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <PrimeReactProvider>
-        <AuthProvider>{children}</AuthProvider>
+        <ToastProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ToastProvider>
       </PrimeReactProvider>
     </QueryClientProvider>
   );
