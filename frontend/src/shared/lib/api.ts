@@ -45,6 +45,27 @@ export class ApiError extends Error {
   }
 }
 
+// --- Sesión expirada -------------------------------------------------------
+// Si una llamada AUTENTICADA responde 401, el token ya no sirve: se limpia y se avisa a la
+// app. `AuthProvider` registra aquí un handler que vacía la sesión; a partir de eso el guard
+// `RequireAuth` redirige a /login solo. No se navega desde este módulo a propósito: así no
+// depende del router ni de `window.location` (que jsdom no implementa).
+//
+// El login queda FUERA de esto (se llama con `auth: false`): ahí un 401 son credenciales
+// inválidas y debe llegar al formulario.
+type UnauthorizedHandler = () => void;
+
+let onUnauthorized: UnauthorizedHandler | null = null;
+
+export function setOnUnauthorized(handler: UnauthorizedHandler | null): void {
+  onUnauthorized = handler;
+}
+
+function handleUnauthorized(): void {
+  clearToken();
+  onUnauthorized?.();
+}
+
 interface RequestOptions {
   method?: string;
   body?: unknown;
@@ -88,6 +109,7 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   }
 
   if (!resp.ok) {
+    if (auth && resp.status === 401) handleUnauthorized();
     const errBody = (data || {}) as { code?: string; message?: string };
     throw new ApiError(
       errBody.code || "ERROR",
@@ -254,6 +276,8 @@ export async function uploadAttachment(
   const text = await resp.text();
   const data = text ? JSON.parse(text) : null;
   if (!resp.ok) {
+    // Esta llamada siempre va autenticada.
+    if (resp.status === 401) handleUnauthorized();
     const e = (data || {}) as { code?: string; message?: string };
     throw new ApiError(e.code || "ERROR", e.message || "Error al subir", resp.status);
   }

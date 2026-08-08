@@ -68,7 +68,7 @@ Panorama del módulo (el detalle de lo ya migrado va abajo):
 - **Detalle de Solicitud:** info, adjuntos, comentarios, acciones de flujo y línea de tiempo
   de auditoría.
 
-### `/solicitudes` — **Frente 3, parte 1 de 3 (solo lectura)** ✅
+### `/solicitudes` — **Frente 3, parte 1 de 4 (solo lectura)** ✅
 
 Migrada en `frontend/src/modules/solicitudes/`. Patrón **lista + panel de detalle**.
 
@@ -101,11 +101,60 @@ Secciones del panel de detalle:
 `deferred` (verificado: recibe 2 de 3 solicitudes y un **403** al pedir una `draft`), y al
 **Admin de Campo** a las que capturó. La pantalla pide y muestra lo que le devuelven.
 
-### Pendiente de las partes 2 y 3
+### Captura y edición — **Frente 3, parte 2 de 4** ✅
 
-- **Parte 2 — captura y contenido:** alta y edición de solicitudes (`POST` / `PATCH`), **carga
-  y descarga de adjuntos** (con el adjunto obligatorio antes de enviar) y **comentar**.
-- **Parte 3 — flujo y bandejas:** acciones de flujo (enviar, asignar concepto final, aprobar
+**`/solicitudes/nueva`** (captura) y **`/solicitudes/:id/editar`** (edición) comparten un
+**formulario full-screen por secciones** (`components/SolicitudForm.tsx`, RHF + Zod):
+
+| Sección | Campos |
+|---|---|
+| Datos generales | **Tipo** (Dropdown con `REQUEST_TYPE_LABELS`, requerido) · **Proveedor** (Dropdown con filtro, requerido) · **Descripción** (textarea, requerida) |
+| Importe y concepto | **Monto neto** (InputNumber a 2 decimales, **> 0**; se envía como **STRING** porque el backend lo tipa `Decimal`) · **Concepto propuesto** (opcional) |
+| Fechas | **Fecha del documento** y **Vencimiento** (Calendar → `"YYYY-MM-DD"` en horario local) · **Semana de pago propuesta** (texto libre, p.ej. `2026-W31`) |
+
+Detalles de comportamiento:
+
+- **Aviso de cumplimiento del proveedor:** al elegir proveedor se muestra su badge de
+  `effective_status` y, si no es `cleared`, un **aviso no bloqueante**. En el Paquete 1 un
+  cumplimiento no vigente **no impide capturar**; el bloqueo duro es de la etapa de pago.
+- **Selector de concepto:** ofrece **solo hojas activas**, **agrupadas por sección**
+  (INGRESOS / EGRESOS — COSTOS / GASTOS / ACTIVOS) y con el `path` del árbol, para distinguir
+  hojas homónimas en grupos distintos. Los encabezados no son seleccionables. Es opcional: el
+  Supervisor confirma o cambia el **concepto final**.
+- Se crea siempre en **`draft`**. Los opcionales vacíos viajan como `null`.
+- Los errores del backend se muestran sin perder lo capturado, y el submit se deshabilita
+  mientras envía.
+
+**Edición:** solo cuando el estado es **`draft`** o **`correction_requested`** y el usuario es
+el **dueño** (`captured_by`) **o Admin** — las mismas tres condiciones que exige
+`workflow.update_solicitud` (además de `solicitud:edit_draft`). Si no se cumplen, la pantalla
+explica el motivo en vez de ofrecer un formulario que iba a ser rechazado. El backend revalida:
+un `PATCH` sobre un estado no editable responde **409** y de otro usuario **403**. Toda edición
+financiera queda auditada (`financial_edited`).
+
+**Botones y permisos de UI:**
+
+| Control | Condición |
+|---|---|
+| **“+ Nueva solicitud”** (encabezado de la lista) y **“Capturar Solicitud”** (sidebar) | `solicitud:create` → **admin** y **field_admin** |
+| **“Editar”** (panel de detalle) | estado editable **y** dueño o Admin |
+
+**Sesión expirada (interceptor 401):** si una llamada **autenticada** responde 401, el cliente
+limpia el token y avisa a la app; la sesión se vacía y el guard manda a `/login`. El 401 del
+**login** queda excluido (son credenciales inválidas y debe llegar al formulario).
+
+**Home por rol:** el Admin de Campo aterriza en la **lista** `/solicitudes`, no en el
+formulario en blanco (`ROLE_HOME` en `nav.ts`).
+
+> ⚠️ **Enviar a revisión exige al menos un adjunto** (`workflow.submit`). La carga de adjuntos
+> llega en la **parte 3**, así que hasta entonces una solicitud capturada desde la UI **no se
+> puede enviar todavía**: se queda en borrador.
+
+### Pendiente de las partes 3 y 4
+
+- **Parte 3 — adjuntos y comentarios:** **carga y descarga de adjuntos** (desbloquea el envío,
+  que exige ≥1 adjunto) y **comentar**.
+- **Parte 4 — flujo y bandejas:** acciones de flujo (enviar, asignar concepto final, aprobar
   Supervisor, aprobar CFO, rechazar, diferir, solicitar corrección), todas a través de
   `workflow.py`; y las bandejas **`/aprobaciones`** (Supervisor, home de su rol) y
   **`/aprobaciones-financieras`** (CFO, home de su rol), que hoy siguen cayendo en `/` porque

@@ -34,6 +34,13 @@
 - **[DECISIÓN] Cumplimientos: ¿permitir corregir un registro, o solo alta?** Hoy son de solo
   alta; un registro equivocado únicamente se supersede con otro más reciente. No hay forma de
   anular ni corregir.
+- **Errores de validación sobre campos `Decimal` devuelven 500 en vez de 422.** En
+  `app/errors.py` el handler de `RequestValidationError` serializa `exc.errors()`, y para un
+  campo `Decimal` con constraint (p.ej. `net_amount: Decimal = Field(gt=0)`) ese detalle
+  incluye un `Decimal` que **no es JSON-serializable** → `TypeError` → 500. Repro:
+  `POST /solicitudes` con `net_amount="0"` (con `description=""` sí responde 422 correctamente).
+  Fix pequeño (serializar los detalles de forma segura); afecta la robustez de la API para
+  cualquier cliente, aunque el formulario actual valide antes de enviar.
 - **Notificaciones por correo en transiciones clave** (Paquete 2).
 
 ## Frontend
@@ -57,9 +64,9 @@
   restringida la app cae a los fallbacks del sistema.
 - ~~**`StatusBadge` de los 8 estados de Solicitud**~~ — **hecho** en el Frente 3 (ver ADR-011):
   `shared/ui/StatusBadge.tsx` sobre el `Badge` genérico, con etiqueta y tono de `labels.ts`.
-- **Mostrar el badge de cumplimiento del proveedor en el detalle de la Solicitud.** Es una
-  advertencia útil al capturar (el cumplimiento vencido no bloquea en el Paquete 1, pero
-  conviene verlo). *Se atenderá en la parte 2 de Solicitudes.*
+- ~~**Mostrar el badge de cumplimiento del proveedor en el detalle de la Solicitud**~~ —
+  **hecho** en la parte 2 de Solicitudes: aparece en el detalle y también al elegir proveedor
+  en la captura, con aviso no bloqueante cuando no está vigente.
 - **Nota ambiental — las pruebas necesitan RAM suficiente.** `vitest` monta un jsdom por
   archivo con PrimeReact (que inyecta su CSS en tiempo de ejecución), así que con la máquina
   saturada puede abortar con `Worker exited unexpectedly` o `spawn UNKNOWN` (errno −4094) al no

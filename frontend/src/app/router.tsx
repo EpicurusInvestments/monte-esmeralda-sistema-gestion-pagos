@@ -20,6 +20,8 @@ import { LoginPage } from "@/app/pages/LoginPage";
 import { MigrationPlaceholderPage } from "@/app/pages/MigrationPlaceholderPage";
 import { ConceptosPage } from "@/modules/conceptos/pages/ConceptosPage";
 import { ProveedoresPage } from "@/modules/proveedores/pages/ProveedoresPage";
+import { SolicitudEditarPage } from "@/modules/solicitudes/pages/SolicitudEditarPage";
+import { SolicitudNuevaPage } from "@/modules/solicitudes/pages/SolicitudNuevaPage";
 import { SolicitudesPage } from "@/modules/solicitudes/pages/SolicitudesPage";
 
 export const routes: RouteObject[] = [
@@ -45,6 +47,8 @@ export const routes: RouteObject[] = [
       { path: "conceptos", element: <ConceptosPage /> },
       { path: "proveedores", element: <ProveedoresPage /> },
       { path: "solicitudes", element: <SolicitudesPage /> },
+      { path: "solicitudes/nueva", element: <SolicitudNuevaPage /> },
+      { path: "solicitudes/:id/editar", element: <SolicitudEditarPage /> },
     ],
   },
 ];

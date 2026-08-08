@@ -26,6 +26,8 @@ vi.mock("@/shared/lib/api", () => {
   return {
     ApiError,
     getToken: vi.fn(),
+    // `auth.tsx` registra aquí el handler de sesión expirada (interceptor 401).
+    setOnUnauthorized: vi.fn(),
     setToken: vi.fn(),
     clearToken: vi.fn(),
     api: { login: vi.fn(), me: vi.fn() },
