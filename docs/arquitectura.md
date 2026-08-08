@@ -158,6 +158,12 @@ Frontend (React/TS)  →  API (FastAPI routers)  →  Negocio (services)  →  D
   - **Un `QueryClient` por instancia, no un singleton de módulo.** Se crea con
     `useState(crearQueryClient)` dentro de `Providers`. Un cliente a nivel de módulo comparte la
     caché entre raíces de React (y, en pruebas, entre casos, generando dependencias de orden).
+  - **Acciones de flujo declaradas por configuración.** Las transiciones de la Solicitud se
+    describen en una tabla (etiqueta, motivo opcional/obligatorio, si pide concepto, si es
+    destructiva) y un **único** `Dialog` + ejecutor las despacha, en vez de un bloque de JSX por
+    acción. Agregar una transición es una entrada más. El selector de concepto
+    (`ConceptoSelect`: solo hojas, agrupadas por sección y con su `path`) se **comparte** entre
+    la captura (concepto propuesto) y la aprobación del Supervisor (concepto final).
   - **Invalidación sin solapamiento de prefijos.** Las claves de TanStack Query se invalidan por
     prefijo, así que invalidar `["solicitudes"]` **ya alcanza** a
     `["solicitudes","detalle",id]`: hacer las dos cosas dispara **refetches duplicados**. Se usa

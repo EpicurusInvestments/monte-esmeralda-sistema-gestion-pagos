@@ -21,6 +21,7 @@ import { Badge } from "@/shared/ui/Badge";
 import { StatusBadge } from "@/shared/ui/StatusBadge";
 
 import { EDITABLE_STATUSES } from "../types";
+import { SolicitudAcciones } from "./SolicitudAcciones";
 import { SolicitudAdjuntos } from "./SolicitudAdjuntos";
 import { SolicitudComentarios } from "./SolicitudComentarios";
 import { SolicitudTimeline } from "./SolicitudTimeline";
@@ -78,6 +79,9 @@ export function SolicitudDetailPanel({ solicitud }: { solicitud: SolicitudDetail
       </div>
 
       <div className="db">
+        <div className="sec">Acciones</div>
+        <SolicitudAcciones solicitud={s} />
+
         <div className="sec">Datos de la solicitud</div>
         <div className="fl">Proveedor</div>
         <div className="fv">{s.supplier?.legal_name ?? "—"}</div>
