@@ -77,7 +77,7 @@ Migrada en `frontend/src/modules/solicitudes/`. Patrón **lista + panel de detal
 | Encabezado | Título “Solicitudes”. **Sin** botón de nueva solicitud (la captura es la parte 2) |
 | Toolbar | **Filtros server-side** (van como query params y reconsultan): estado (los 8), tipo, proveedor (Dropdown desde `listSuppliers`) y **rango de fechas de documento** (Calendar → `YYYY-MM-DD`). Además **búsqueda local** por folio o proveedor, botón “Limpiar” y contador |
 | Lista | `DataTable`: folio (mono), proveedor, tipo, concepto (`concept_label`), **monto** (MXN, alineado a la derecha), **estado** (`<StatusBadge>`) y fecha de documento |
-| Panel derecho | Detalle de **solo lectura** (abajo). Sin selección, estado vacío |
+| Panel derecho | Detalle de **solo lectura** (abajo). Sin selección, estado vacío. Su **ancho se ajusta** arrastrando el borde izquierdo (ver ADR-011) |
 
 Secciones del panel de detalle:
 

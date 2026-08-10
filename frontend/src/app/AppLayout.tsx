@@ -11,6 +11,7 @@ import { Button } from "primereact/button";
 import type { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
+import logoMonteEsmeralda from "@/assets/logo-monte-esmeralda.png";
 import { useAuth } from "@/shared/lib/auth";
 import { ROLE_LABELS } from "@/shared/lib/labels";
 import { estaMontada } from "@/shared/lib/mountedRoutes";
@@ -44,9 +45,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <div className="logo">
-          MONTE<span>ESMERALDA</span>
-        </div>
+        <Link to="/" className="logo" aria-label="Inicio">
+          <img
+            className="logo-img"
+            src={logoMonteEsmeralda}
+            alt="Monte Esmeralda"
+          />
+        </Link>
         <div className="header-spacer" />
         <div className="user-chip">
           <span className="user-avatar" aria-hidden="true">

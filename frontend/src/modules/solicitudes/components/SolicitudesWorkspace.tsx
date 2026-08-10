@@ -28,6 +28,8 @@ import { useAuth } from "@/shared/lib/auth";
 import { toISODate } from "@/shared/lib/dates";
 import { REQUEST_TYPE_LABELS, formatCurrency, formatDate } from "@/shared/lib/labels";
 import { canCreateSolicitud } from "@/shared/lib/nav";
+import { useResizableDetail } from "@/shared/lib/useResizableDetail";
+import { DetailResizeHandle } from "@/shared/ui/DetailResizeHandle";
 import { StatusBadge } from "@/shared/ui/StatusBadge";
 
 import { useSolicitud, useSolicitudes } from "../hooks";
@@ -79,6 +81,7 @@ export function SolicitudesWorkspace({
   const [selectedId, setSelectedId] = useState<string | null>(
     () => searchParams.get("seleccion") || null,
   );
+  const detalleAncho = useResizableDetail();
 
   const desde = toISODate(rango?.[0] ?? null);
   const hasta = toISODate(rango?.[1] ?? null);
@@ -343,7 +346,10 @@ export function SolicitudesWorkspace({
           )}
         </div>
 
-        <aside className="detail-pane">{panel}</aside>
+        <DetailResizeHandle {...detalleAncho.handleProps} />
+        <aside className="detail-pane" style={{ width: detalleAncho.width }}>
+          {panel}
+        </aside>
       </div>
     </>
   );

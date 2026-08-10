@@ -43,8 +43,8 @@ src/modules/<modulo>/
 |---|---|
 | **Header** | Título del módulo · usuario activo · logout |
 | **Sidebar** | Menú por rol (según `nav.ts`, que espeja `permissions.py`) |
-| **Toolbar** | Búsqueda local, filtros (estado, proveedor, tipo, fechas), contador |
-| **Lista + detalle** | DataTable a la izquierda; **panel de detalle a la derecha (~480px)** al seleccionar un renglón, sin perder el contexto de la lista |
+| **Toolbar** | Búsqueda local, filtros (estado, proveedor, tipo, fechas) siempre como `Dropdown` con la etiqueta dentro de la opción (“Estado: activos”), contador |
+| **Lista + detalle** | DataTable a la izquierda; **panel de detalle a la derecha** (`--detail-width`, 420px) al seleccionar un renglón, sin perder el contexto de la lista. El ancho se ajusta arrastrando su borde izquierdo (`useResizableDetail` + `DetailResizeHandle`): mínimo el valor por defecto, máximo +200px, y se recuerda en `localStorage` para todas las pantallas |
 | **Forms full-screen** | Para capturas complejas (Nueva/Editar Solicitud): pantalla completa por secciones, con adjunto obligatorio antes de enviar |
 
 ### Convenciones visuales
@@ -53,6 +53,16 @@ src/modules/<modulo>/
   `draft`, `submitted`, `correction_requested`, `supervisor_approved`, `cfo_approved`,
   `deferred`, `rejected`, `cancelled`. El front **nunca inventa estados**; toma etiqueta y
   tono de `labels.ts`.
+- **El tamaño es del tema, no de la pantalla.** `theme.css` define una escala única
+  (`--fs`, `--fs-mono`, `--fs-sm`, `--fs-xs`, `--fs-th`, `--fs-lg`, `--fs-xl`) y el alto de
+  control (`--ctl-h`, `--ctl-pad-x/y`), y **alinea a PrimeReact a esa escala** en un solo
+  bloque. Referencia: el buscador de la toolbar y la columna de folio/código/RFC — 13px de
+  texto y 34px de alto de control. Ninguna pantalla fija `fontSize` inline ni reparte clases
+  `p-inputtext-sm`: el modo *small* de la librería es 14px/42px, o sea **más grande** que la
+  referencia. Excepciones que sí destacan: `thead th` (`--fs-th`, en negrita) y `.td-main`
+  (dato principal de la fila y cuentas agrupadoras del catálogo: mismo tamaño, más peso).
+- Las **DataTable del patrón** van con `size="small"` (`p-datatable-sm`): esa clase aporta
+  solo la densidad del padding; el tamaño de letra lo pone el tema.
 - **Campos obligatorios** con asterisco.
 - Iconografía sobria; badges legibles por encima de íconos crípticos.
 - Textos de UI en **español (es-MX)**; moneda **MXN**; fechas en formato local.

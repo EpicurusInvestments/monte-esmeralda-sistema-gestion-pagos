@@ -162,6 +162,18 @@ function panelDetalle() {
   return within(el as HTMLElement);
 }
 
+
+/** Abre un Dropdown de PrimeReact por su nombre accesible.
+ *
+ * `aria-label` termina en un input oculto (`.p-hidden-accessible`) que NO abre el panel:
+ * hay que hacer click en la raíz `.p-dropdown`.
+ */
+function abrirDropdown(label: string) {
+  const raiz = screen.getByLabelText(label).closest(".p-dropdown");
+  if (!raiz) throw new Error(`No se encontró el Dropdown "${label}"`);
+  fireEvent.click(raiz);
+}
+
 beforeEach(() => {
   vi.mocked(getToken).mockReturnValue(null);
   vi.mocked(api.me).mockReset();
@@ -187,6 +199,11 @@ test("la lista renderiza los proveedores con su badge de cumplimiento", async ()
   // El filtro por defecto es "Activos": el inactivo no aparece.
   expect(screen.queryByText("Inactivo S.A.")).toBeNull();
   expect(screen.getByText("2 de 3")).toBeTruthy();
+
+  // La lista va en modo compacto de PrimeReact: el padding de celda sale de esa clase (el
+  // tamaño de fuente lo fija el tema). Si alguien quita `size="small"`, las filas se
+  // vuelven a inflar.
+  expect(document.querySelector(".p-datatable")?.className).toContain("p-datatable-sm");
 });
 
 test("seleccionar un proveedor abre el detalle con la sección de cumplimiento", async () => {
@@ -262,12 +279,28 @@ test("el filtro de cumplimiento usa effective_status", async () => {
   renderApp("/proveedores");
 
   await screen.findByText("Aceros del Bajío S.A. de C.V.");
-  fireEvent.click(screen.getByRole("button", { name: "Vencido" }));
+  abrirDropdown("Filtrar por cumplimiento");
+  fireEvent.click(await screen.findByText("Vencido"));
 
   await waitFor(() => {
     expect(screen.queryByText("Aceros del Bajío S.A. de C.V.")).toBeNull();
   });
   expect(screen.getByText("Cementos Peñón")).toBeTruthy();
+  expect(screen.getByText("1 de 3")).toBeTruthy();
+});
+
+test("el filtro de estado 'inactivos' deja solo los dados de baja", async () => {
+  sesion(ADMIN);
+  renderApp("/proveedores");
+
+  await screen.findByText("Aceros del Bajío S.A. de C.V.");
+  abrirDropdown("Filtrar por estado");
+  fireEvent.click(await screen.findByText("Estado: inactivos"));
+
+  await waitFor(() => {
+    expect(screen.queryByText("Aceros del Bajío S.A. de C.V.")).toBeNull();
+  });
+  expect(screen.getByText("Inactivo S.A.")).toBeTruthy();
   expect(screen.getByText("1 de 3")).toBeTruthy();
 });
 

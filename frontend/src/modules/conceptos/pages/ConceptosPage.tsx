@@ -1,8 +1,8 @@
 /** Catálogo de Conceptos — primera pantalla de negocio migrada.
  *
  * Patrón lista + panel de detalle: DataTable a la izquierda, detalle (o formulario) a la
- * derecha. La búsqueda y el filtro por sección son LOCALES sobre lo ya traído; el toggle
- * "Solo activos / Todos" sí cambia la consulta (`active_only` del backend).
+ * derecha. La búsqueda y el filtro por sección son LOCALES sobre lo ya traído; el filtro de
+ * estado sí toca la consulta (`active_only` del backend).
  *
  * Escritura solo con `concept:edit` (hoy Admin, ver `canEditConcepts` en nav.ts). El backend
  * revalida: ocultar los botones es únicamente UX.
@@ -10,11 +10,14 @@
 
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
+import { Dropdown } from "primereact/dropdown";
 import { useMemo, useState } from "react";
 
 import { useAuth } from "@/shared/lib/auth";
+import { useResizableDetail } from "@/shared/lib/useResizableDetail";
 import { canEditConcepts } from "@/shared/lib/nav";
 import { Badge } from "@/shared/ui/Badge";
+import { DetailResizeHandle } from "@/shared/ui/DetailResizeHandle";
 
 import { ConceptoDetailPanel } from "../components/ConceptoDetailPanel";
 import { ConceptoForm } from "../components/ConceptoForm";
@@ -24,15 +27,33 @@ import type { Concept, ConceptoFormValues } from "../types";
 
 type Modo = "view" | "new" | "edit";
 
+/** El backend solo expone `active_only` (true = solo activos; false = todos): no existe un
+ *  "solo inactivos". "Inactivos" se resuelve pidiendo todos y filtrando en cliente. */
+type FiltroEstado = "activos" | "inactivos" | "todos";
+
+const ESTADO_OPTIONS: { value: FiltroEstado; label: string }[] = [
+  { value: "activos", label: "Estado: activos" },
+  { value: "inactivos", label: "Estado: inactivos" },
+  { value: "todos", label: "Estado: todos" },
+];
+
+const SECCION_OPTIONS = SECTIONS.map((s) => ({
+  value: s.code,
+  label: `${s.code} — ${s.label}`,
+}));
+
 export function ConceptosPage() {
   const { user } = useAuth();
   const canEdit = user ? canEditConcepts(user.role) : false;
 
-  const [activeOnly, setActiveOnly] = useState(true);
+  const [estado, setEstado] = useState<FiltroEstado>("activos");
+  // "Inactivos" necesita traer todos para poder filtrarlos en cliente.
+  const activeOnly = estado === "activos";
   const [q, setQ] = useState("");
   const [section, setSection] = useState<string | null>(null);
   const [selected, setSelected] = useState<Concept | null>(null);
   const [modo, setModo] = useState<Modo>("view");
+  const detalleAncho = useResizableDetail();
 
   const lista = useConceptos({ activeOnly });
   const crear = useCreateConcepto();
@@ -45,12 +66,13 @@ export function ConceptosPage() {
     const texto = q.trim().toLowerCase();
     return conceptos.filter((c) => {
       if (section && c.section !== section) return false;
+      if (estado === "inactivos" && c.active) return false;
       if (!texto) return true;
       return (
         c.code.toLowerCase().includes(texto) || c.name.toLowerCase().includes(texto)
       );
     });
-  }, [conceptos, q, section]);
+  }, [conceptos, q, section, estado]);
 
   const reset = () => {
     setSelected(null);
@@ -122,7 +144,7 @@ export function ConceptosPage() {
     <div>
       <div className={c.is_header ? "td-main" : undefined}>{c.name}</div>
       {c.path && c.path !== c.name && (
-        <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 2 }}>{c.path}</div>
+        <div className="td-sub">{c.path}</div>
       )}
     </div>
   );
@@ -161,47 +183,30 @@ export function ConceptosPage() {
           onChange={(e) => setQ(e.target.value)}
         />
 
-        <span className="tb-label">Sección</span>
-        <button
-          type="button"
-          className={`fp${section === null ? " active" : ""}`}
-          onClick={() => setSection(null)}
-        >
-          Todas
-        </button>
-        {SECTIONS.map((s) => (
-          <button
-            key={s.code}
-            type="button"
-            className={`fp${section === s.code ? " active" : ""}`}
-            onClick={() => setSection(s.code)}
-            title={s.label}
-          >
-            {s.code}
-          </button>
-        ))}
+        <Dropdown
+          aria-label="Filtrar por sección"
+          options={SECCION_OPTIONS}
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sección: todas"
+          showClear
+          style={{ minWidth: 210 }}
+          value={section}
+          onChange={(e) => setSection((e.value as string | null) ?? null)}
+        />
 
-        <span className="tb-label">Estado</span>
-        <button
-          type="button"
-          className={`fp${activeOnly ? " active" : ""}`}
-          onClick={() => {
-            setActiveOnly(true);
+        <Dropdown
+          aria-label="Filtrar por estado"
+          options={ESTADO_OPTIONS}
+          optionLabel="label"
+          optionValue="value"
+          style={{ minWidth: 160 }}
+          value={estado}
+          onChange={(e) => {
+            setEstado((e.value as FiltroEstado | null) ?? "activos");
             reset();
           }}
-        >
-          Solo activos
-        </button>
-        <button
-          type="button"
-          className={`fp${!activeOnly ? " active" : ""}`}
-          onClick={() => {
-            setActiveOnly(false);
-            reset();
-          }}
-        >
-          Todos
-        </button>
+        />
 
         <span className="tb-spacer" />
         <span className="tb-count">
@@ -268,7 +273,10 @@ export function ConceptosPage() {
           )}
         </div>
 
-        <aside className="detail-pane">{detalle}</aside>
+        <DetailResizeHandle {...detalleAncho.handleProps} />
+        <aside className="detail-pane" style={{ width: detalleAncho.width }}>
+          {detalle}
+        </aside>
       </div>
     </>
   );

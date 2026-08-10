@@ -76,13 +76,13 @@ con la sub-entidad anidada en el detalle:
 | Zona | Contenido |
 |---|---|
 | Encabezado | Título y, con `supplier:create`, botón **“+ Nuevo proveedor”** |
-| Toolbar | Búsqueda local por razón social o RFC · filtro de **estado** (Activos / Todos) · filtro de **cumplimiento** (Cualquiera / Vigente / Pendiente / Bloqueado / Vencido / Sin registro, sobre `effective_status`) · contador |
+| Toolbar | Búsqueda local por razón social o RFC · `Dropdown` de **estado** (Activos / Inactivos / Todos) · `Dropdown` de **cumplimiento** (Vigente / Pendiente / Bloqueado / Vencido / Sin registro, sobre `effective_status`, con “limpiar” = cualquiera) · contador |
 | Lista | `DataTable`: razón social, RFC (mono), contacto (nombre + correo), estado (badge) y **cumplimiento** (badge desde `effective_status`) |
-| Panel derecho | Identificación, contacto, datos bancarios y sección **Cumplimiento**: situación vigente, lista de registros con su badge/fechas/referencia/notas, y —con `clearance:create`— formulario **inline** “Registrar cumplimiento” |
+| Panel derecho | Su **ancho se ajusta** arrastrando el borde izquierdo (ver ADR-011). Identificación, contacto, datos bancarios y sección **Cumplimiento**: situación vigente, lista de registros con su badge/fechas/referencia/notas, y —con `clearance:create`— formulario **inline** “Registrar cumplimiento” |
 | Formulario | Alta/edición del proveedor en el mismo panel (RHF + Zod) |
 
 Comportamiento: la búsqueda y los dos filtros son **locales** (`GET /suppliers` no acepta
-parámetros). Registrar un cumplimiento **refresca también la lista**, porque el badge de
+parámetros), incluida la opción **Inactivos** (`status = "inactive"`). Registrar un cumplimiento **refresca también la lista**, porque el badge de
 cumplimiento se deriva del registro más reciente.
 
 ## Permisos (capacidades)
