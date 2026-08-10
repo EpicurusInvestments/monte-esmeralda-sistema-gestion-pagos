@@ -2,12 +2,15 @@
 
 > Reglas locales del frontend. Hereda y no contradice el `CLAUDE.md` raíz.
 >
-> **Estado (Frente 3, en curso):** este proyecto ya es el frontend nuevo en el stack de
-> GRC-OIR (Vite + React + TS + PrimeReact + TanStack Query + RHF + Zod). Hoy contiene solo
-> el **andamiaje**: providers, router (`/login` y `/` con layout), estructura de carpetas y
-> los helpers portados en `src/shared/lib/` (`api.ts`, `types.ts`, `labels.ts`, `nav.ts`).
-> El frontend anterior en Next.js se conserva como referencia en `legacy-frontend/` y ya no
-> se desarrolla. Las pantallas se migran por incrementos siguiendo estas reglas.
+> **Estado (Frente 3 cerrado):** este es el frontend del sistema, en el stack de GRC-OIR
+> (Vite + React + TS + PrimeReact + TanStack Query + RHF + Zod). Están migradas **todas** las
+> pantallas del Paquete 1: login, Solicitudes (lista, captura/edición, detalle con adjuntos,
+> comentarios, acciones de flujo y bitácora), las dos bandejas de aprobación, Proveedores con
+> cumplimientos, Catálogo de Conceptos y Administración de usuarios. La raíz `/` sigue siendo
+> un placeholder hasta que exista el Dashboard (Paquete 2).
+>
+> El frontend anterior en Next.js **se retiró del repositorio**; su historial queda en git.
+> Estas reglas rigen todo lo que se agregue de aquí en adelante.
 
 ## Stack (objetivo)
 
@@ -79,8 +82,8 @@ src/modules/<modulo>/
   siempre. `nav.ts` y `availableActions()` deben mantenerse alineados con
   `permissions.py`.
 - Manejo explícito de estados de **carga / error / vacío** en cada pantalla.
-- Base de la API por variable de entorno: bajo Vite será `import.meta.env.VITE_API_URL`
-  (reemplaza al `NEXT_PUBLIC_API_URL` actual de Next.js).
+- Base de la API por variable de entorno: `import.meta.env.VITE_API_URL` (en `.env.local`,
+  a partir de `.env.local.example`).
 - Accesibilidad básica: labels en inputs, foco visible, navegación por teclado.
 
 ## Calidad

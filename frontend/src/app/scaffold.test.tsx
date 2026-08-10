@@ -121,7 +121,7 @@ test("con token guardado, revalida contra /auth/me y muestra el layout con el us
   expect(screen.getByText("Tesorería")).toBeTruthy();
   // Iniciales del avatar ("Ana Tesorería" → "AT").
   expect(screen.getByText("AT")).toBeTruthy();
-  expect(screen.getByText("Frontend en migración")).toBeTruthy();
+  expect(screen.getByText("Monte Esmeralda", { selector: "h1" })).toBeTruthy();
   expect(api.me).toHaveBeenCalledTimes(1);
 });
 

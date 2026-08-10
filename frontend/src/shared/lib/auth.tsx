@@ -3,7 +3,8 @@
 
 /** Sesión de la aplicación.
  *
- * Port de `legacy-frontend/src/lib/auth.tsx` adaptado a Vite: sin `"use client"` y con los
+ * Portado del frontend heredado (Next.js, retirado del repo; su historial sigue en git) y
+ * adaptado a Vite: sin `"use client"` y con los
  * imports por alias `@/`. La lógica es la misma: al arrancar, si hay token en localStorage
  * se revalida contra `GET /auth/me`; si el token ya no sirve, se limpia y la sesión queda
  * vacía. El token lo guarda/lee `api.ts` (misma clave `me_token`).

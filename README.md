@@ -27,14 +27,14 @@ ventas, DTUs, pronósticos ni matriz de flujo de efectivo (ver _Alcance_ abajo).
 
 Monolito modular:
 
-| Capa        | Tecnología                                   |
-| ----------- | -------------------------------------------- |
-| Frontend    | Next.js (App Router) + TypeScript (estricto) |
-| Backend     | FastAPI + Python (tipado)                    |
-| Base de datos | PostgreSQL (SQLite para pruebas/dev ligero)|
-| Archivos    | Abstracción compatible con S3 (disco local en dev) |
-| Despliegue  | Docker Compose                               |
-| Idioma UI   | Español                                       |
+| Capa | Tecnología |
+| --- | --- |
+| Frontend | React + TypeScript (estricto) + Vite + PrimeReact + TanStack Query + React Hook Form + Zod |
+| Backend | FastAPI + Python (tipado) |
+| Base de datos | **SQLite** en local · **SQL Server (AWS RDS)** en producción, con un solo juego de migraciones (se elige con `DB_BACKEND`) |
+| Archivos | Abstracción compatible con S3 (disco local en dev) |
+| Despliegue | Ejecución local (venv + Vite). La containerización está **diferida** (ver _Puesta en marcha_) |
+| Idioma UI | Español (es-MX) |
 
 ```
 .
@@ -48,36 +48,32 @@ Monolito modular:
 │   │   └── seed.py     # Usuarios + catálogo + proveedores demo
 │   ├── alembic/        # Migraciones
 │   └── tests/          # Pruebas unitarias + integración (pytest)
-├── frontend/           # Next.js + TypeScript
-│   ├── src/app/        # Pantallas (login, solicitudes, aprobaciones, etc.)
-│   ├── src/lib/        # Cliente API, auth, navegación por rol, etiquetas
-│   └── tests/          # Pruebas smoke (Playwright)
-└── docker-compose.yml
+├── frontend/           # Vite + React + TypeScript + PrimeReact
+│   └── src/
+│       ├── app/        # Arranque: providers, router, guards, layout, login
+│       ├── modules/    # Un módulo por recurso, espejando al backend
+│       │               #   (solicitudes, proveedores, conceptos, administracion);
+│       │               #   cada uno con types.ts, hooks.ts, components/, pages/
+│       └── shared/     # lib/ (cliente API, auth, tipos, etiquetas, navegación)
+│                       # y ui/ (tema y componentes del patrón de pantalla)
+├── docs/               # Documentación viva (arquitectura, contrato de API, módulos)
+└── docker-compose.yml  # Diferido: hoy no es el camino soportado (ver abajo)
 ```
 
 ---
 
-## Puesta en marcha con Docker (recomendado)
+## Puesta en marcha
 
-Requiere Docker y Docker Compose.
+El camino soportado hoy es **local**: backend con venv + SQLite y frontend con Vite. Son dos
+procesos y no requiere Docker ni una base de datos externa.
 
-```bash
-docker compose up --build
-```
+> **Docker está diferido.** El `docker-compose.yml` del repo quedó del baseline heredado: asume
+> PostgreSQL (que ya se retiró en favor de SQLite/SQL Server) y un frontend que ya no existe, y
+> el frontend actual no tiene `Dockerfile`. Tal cual, `docker compose up` **no levanta el
+> sistema**. Containerizar es una decisión pendiente con su propio incremento; ver «Decisiones
+> pendientes» en [`docs/arquitectura.md`](docs/arquitectura.md).
 
-Esto levanta:
-
-- **db**: PostgreSQL 16 (`localhost:5432`)
-- **backend**: FastAPI en `http://localhost:8000` (aplica migraciones y siembra
-  datos al iniciar). Documentación interactiva en `http://localhost:8000/docs`.
-- **frontend**: Next.js en `http://localhost:3000`
-
-Abra `http://localhost:3000` e inicie sesión con cualquiera de los usuarios de
-prueba listados abajo.
-
----
-
-## Ejecución local sin Docker
+## Ejecución local
 
 ### Backend
 
@@ -86,22 +82,36 @@ cd backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-# Por defecto usa SQLite (./monte_esmeralda.db); no requiere Postgres.
+# Por defecto usa SQLite (./monte_esmeralda.db); no requiere una BD externa.
 alembic upgrade head          # crea el esquema
 python -m app.seed            # siembra usuarios, catálogo y proveedores demo
 uvicorn app.main:app --reload # API en http://localhost:8000
 ```
 
-> Para usar Postgres en local, exporte `DATABASE_URL`
-> (`postgresql+psycopg2://usuario:clave@host:5432/bd`) antes de `alembic upgrade`.
+> Para apuntar a **SQL Server** (AWS RDS) en vez de SQLite, ponga `DB_BACKEND=sqlserver` y las
+> variables de conexión en `backend/.env` (requiere el **ODBC Driver 18**). Las credenciales van
+> solo en `.env` o en AWS Secrets Manager, nunca en el repositorio. Detalle en
+> [`backend/CLAUDE.md`](backend/CLAUDE.md) y ADR-003/ADR-010 de
+> [`docs/arquitectura.md`](docs/arquitectura.md).
 
 ### Frontend
 
 ```bash
 cd frontend
 npm install
-cp .env.local.example .env.local   # NEXT_PUBLIC_API_URL=http://localhost:8000
-npm run dev                        # http://localhost:3000
+cp .env.local.example .env.local   # VITE_API_URL=http://localhost:8000
+npm run dev                        # http://localhost:5173
+```
+
+Abra `http://localhost:5173` e inicie sesión con cualquiera de los usuarios de prueba listados
+abajo. El backend debe estar corriendo en `:8000` (su CORS ya permite el origen de Vite).
+
+Calidad del frontend:
+
+```bash
+npm run typecheck   # tsc --noEmit
+npm run lint        # eslint
+npm test            # vitest
 ```
 
 ---
@@ -123,10 +133,11 @@ Cada rol aterriza en su pantalla de inicio (Role Home):
 
 - Supervisor → **Bandeja de Aprobaciones**
 - CFO → **Aprobaciones Financieras**
-- Admin de Campo → **Captura de Solicitudes**
+- Admin de Campo → **Solicitudes** (la lista de lo que capturó; «Capturar Solicitud» queda a
+  un clic en el menú)
 - Tesorería → **Solicitudes** (solo aprobadas)
 - CEO / Contabilidad / Ingeniería → **Vista de Solicitudes**
-- Admin → **Administración**
+- Admin → **Administración de usuarios**
 
 ---
 
@@ -176,18 +187,22 @@ Supervisor con concepto hoja (y rechazo de encabezados), CFO solo tras
 Supervisor, flujos de rechazo/diferimiento/corrección, creación de eventos de
 auditoría y **aplicación de permisos por rol**.
 
-### Frontend (Playwright) — smoke
-
-Requiere backend (sembrado) y servidor de desarrollo del frontend.
+### Frontend (vitest) — unitarias + de integración de pantalla
 
 ```bash
 cd frontend
-npx playwright install chromium   # primera vez
-npm run test:e2e
+npm test
 ```
 
-Cubre: login, captura + envío de solicitud, bandeja de Supervisor, bandeja de
-CFO y la línea de tiempo de auditoría en el detalle.
+Monta las pantallas reales con el router y los providers, con el cliente de API mockeado:
+lista y detalle de cada módulo, formularios (validación y payloads), acciones de flujo,
+filtros y los bloqueos por rol.
+
+### Frontend (Playwright) — smoke: **pendiente de reescritura**
+
+Los smoke tests end-to-end existían sobre el frontend heredado y **no se han reescrito** sobre
+el frontend Vite; se harán en un PR aparte (ver
+[`docs/BACKLOG.md`](docs/BACKLOG.md)). Hoy no hay comandos de Playwright que ejecutar.
 
 ---
 
@@ -198,6 +213,7 @@ CFO y la línea de tiempo de auditoría en el detalle.
 | POST   | `/auth/login`                                 | Inicia sesión (JWT)                  |
 | GET    | `/auth/me`                                     | Usuario actual                       |
 | GET/POST/PATCH | `/users`                              | Gestión de usuarios (Admin)          |
+| GET    | `/roles-permissions`                          | Matriz de roles y capacidades, solo lectura (Admin) |
 | GET/POST/PATCH | `/suppliers`                          | Proveedores                          |
 | GET/POST | `/suppliers/{id}/clearances`                | Cumplimiento (registro externo)      |
 | GET/POST/PATCH | `/concepts`                           | Catálogo de conceptos                |

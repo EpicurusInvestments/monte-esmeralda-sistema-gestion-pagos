@@ -181,15 +181,22 @@
 
 ## Cierre del Frente 3 (limpieza)
 
-Todo esto se ejecuta al terminar la migración del frontend y retirar el frontend heredado.
-
-- **Actualizar `README.md`** al flujo del frontend Vite: `http://localhost:5173` y
-  `VITE_API_URL` (hoy describe el arranque de Next.js en `:3000`).
-- **Revisar la referencia a `localhost:3000` en `docker-compose.yml`**, ligada a la decisión de
-  Docker que sigue diferida (ver «Decisiones pendientes» en
-  [`arquitectura.md`](arquitectura.md)).
-- **Retirar `legacy-frontend/` del repo.** Se conserva solo como referencia visual mientras se
-  migran las pantallas; con él se va la vulnerabilidad de Next.js que hoy queda ahí sin
-  desplegarse.
-- **Reescribir los smoke tests de Playwright** sobre el frontend nuevo (los del frontend
-  heredado quedaron en `legacy-frontend/tests/`).
+- ~~**Actualizar `README.md`** al flujo del frontend Vite~~ — **hecho**: describe el arranque
+  local real (`:5173`, `VITE_API_URL`, comandos de calidad), la base de datos vigente
+  (SQLite / SQL Server) y ya no promete un flujo Docker inexistente.
+- ~~**Retirar `legacy-frontend/` del repo**~~ — **hecho**: se eliminó con `git rm -r` (31
+  archivos; el historial sigue en git) y con él salió la vulnerabilidad de Next.js. Se limpiaron
+  las referencias que quedaban en `CLAUDE.md` (raíz y frontend), `docs/arquitectura.md`, el skill
+  `frontend-react`, el comentario de procedencia de `shared/lib/auth.tsx` y el texto de la
+  pantalla raíz.
+- **Reescribir los smoke tests de Playwright** sobre el frontend nuevo. Los del frontend
+  heredado se fueron con él (recuperables del historial de git como referencia de los flujos que
+  cubrían: login, captura + envío, bandeja de Supervisor, bandeja de CFO y bitácora en el
+  detalle). Hoy la cobertura de frontend es solo `vitest`, que monta las pantallas con el
+  cliente de API mockeado: falta el recorrido real contra el backend.
+- **Decidir la containerización** (`docker-compose.yml`). El archivo quedó del baseline: levanta
+  PostgreSQL —retirado en el Frente 2— e intenta construir un frontend que no tiene
+  `Dockerfile`, así que **hoy no levanta el sistema**; lleva un comentario de advertencia y el
+  README remite al arranque local. No se tocó para no inventar un flujo Docker sin haber
+  decidido si se containeriza. Ligado a la decisión de Docker en
+  [`arquitectura.md`](arquitectura.md).

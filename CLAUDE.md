@@ -73,7 +73,7 @@ Solicitud de Pago, esta pasa por revisión operativa (Supervisor) y aprobación 
 
 | Capa | Tecnología | Notas |
 |---|---|---|
-| Frontend | **React + TypeScript + Vite** | En migración (Frente 3): el andamiaje ya vive en `frontend/`; las pantallas se migran por incrementos desde `legacy-frontend/` (Next.js retirado). Objetivo: paridad con GRC-OIR. TS estricto. |
+| Frontend | **React + TypeScript + Vite** | Frente 3 cerrado: todas las pantallas del Paquete 1 viven en `frontend/`. El frontend heredado (Next.js) se retiró del repo; su historial sigue en git. Paridad con GRC-OIR. TS estricto. |
 | Librería UI | **PrimeReact** | Misma que GRC-OIR (DataTable potente, patrón lista + panel de detalle). |
 | Datos/formularios (frontend) | **TanStack Query + React Hook Form + Zod** | Igual que GRC-OIR. |
 | Backend | **Python + FastAPI** | **Se mantiene intacto.** Pydantic v2, SQLAlchemy 2.x, Alembic. JWT (HS256) + bcrypt. |
@@ -115,10 +115,9 @@ monte-esmeralda-sistema-gestion-pagos/
 │   ├── CLAUDE.md              # reglas del frontend
 │   └── src/
 │       ├── app/               # main.tsx, providers, router, layout
-│       ├── modules/           # un módulo por recurso (espeja backend); se va llenando
+│       ├── modules/           # un módulo por recurso (espeja backend): solicitudes,
+│       │                       # proveedores, conceptos, administracion
 │       └── shared/            # ui/ (tema) y lib/ (api, types, labels, nav)
-├── legacy-frontend/           # Next.js RETIRADO — solo referencia visual mientras se
-│                              # migran las pantallas; NO se desarrolla ni se levanta
 └── docs/                      # DOCUMENTACIÓN VIVA (se crea en Frente 4)
     ├── arquitectura.md
     ├── API-CONTRACT.md
@@ -254,8 +253,10 @@ Política: **el código y su documentación viajan en el mismo PR.** Documentos 
   puerto de Vite). La base de la API se lee con `import.meta.env.VITE_API_URL`: copia
   `.env.local.example` a `.env.local` con `VITE_API_URL=http://localhost:8000`. Calidad:
   `npm run typecheck`, `npm run lint`, `npm test`.
-- El frontend heredado (Next.js) quedó en `legacy-frontend/` solo como referencia visual: **ya
-  no se levanta ni se desarrolla**.
+- El frontend heredado (Next.js) **ya se retiró del repositorio** al cerrar el Frente 3; si
+  hace falta consultarlo, está en el historial de git.
+- **Docker está diferido:** `docker-compose.yml` es del baseline (Postgres + el frontend
+  retirado) y hoy no levanta el sistema. El camino soportado es el arranque local de arriba.
 - Usuarios semilla documentados en el README.
 
 ## 12. Git y flujo de trabajo
@@ -302,9 +303,8 @@ documentación actualizada.
 - **Endurecimiento pendiente:** validación de adjuntos (tamaño/tipo) + descarga por
   streaming; paginación/orden en listados; bloqueo **duro** por cumplimiento vencido de
   proveedor; ¿notificaciones por correo en transiciones clave? `[[POR LLENAR: priorizar]]`
-- **Vulnerabilidad de Next.js:** ya no afecta al frontend en uso (el nuevo es Vite). Queda
-  únicamente en `legacy-frontend/`, que no se levanta ni se despliega; desaparece del repo al
-  cerrar el Frente 3 y retirar esa carpeta.
+- **Vulnerabilidad de Next.js: resuelta.** Salió del repositorio junto con `legacy-frontend/`
+  al cerrar el Frente 3; el frontend en uso es Vite y no depende de Next.js.
 
 ## 15. Glosario rápido
 
