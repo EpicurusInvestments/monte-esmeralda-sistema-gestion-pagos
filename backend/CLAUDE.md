@@ -125,6 +125,31 @@ app/
   (`db_ddladmin` / `db_owner`) al correr migraciones. Las migraciones se aplican contra AWS
   **solo tras revisarlas**.
 
+## Entornos de base de datos
+
+Se eligen con `DB_BACKEND` en `.env` (no versionado):
+
+- **`sqlite`** → `backend/monte_esmeralda.db`. Es el modo de desarrollo y el que deben usar los
+  smoke e2e del frontend.
+- **`sqlserver`** → **SQL Server en AWS RDS** (`MESistemaGestionPagos`), la **base oficial**;
+  requiere ODBC Driver 18 y las credenciales en `.env` (nunca en el repo). Es el entorno para
+  verificar contra datos reales.
+
+Tres reglas que no se negocian:
+
+1. **`pytest` corre SIEMPRE en SQLite en memoria.** `tests/conftest.py` crea su propio engine
+   `sqlite://` y **no** lee `DB_BACKEND` ni `settings.sqlalchemy_url`, así que el `.env` no lo
+   afecta. Dos aserciones en ese archivo fallan si alguien reapunta el engine: las pruebas
+   hacen `drop_all`/`create_all` y la instancia RDS es oficial **y compartida con GRC-OIR**.
+2. **Tras cambiar el `.env`, reinicia `uvicorn`.** `--reload` recarga el código, **no** las
+   variables de entorno: sin reiniciar seguirías contra la base anterior.
+3. **Nada destructivo contra AWS**: ni pruebas, ni `alembic downgrade`, ni borrados masivos.
+   Revisa toda migración autogenerada antes de aplicarla ahí (Alembic emite `DROP` cuando el
+   modelo y la base divergen).
+
+Procedimiento completo (incluido el patrón para alternar con dos archivos `.env`) en el
+[`README.md`](../README.md#entornos-de-base-de-datos).
+
 ## Calidad
 
 - Tipos en todo. Pruebas con **pytest** (casos felices, validaciones de dominio y, sobre

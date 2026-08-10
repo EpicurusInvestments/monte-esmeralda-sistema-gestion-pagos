@@ -2,6 +2,11 @@
 
 Tests run against an in-memory SQLite database (shared across connections via
 StaticPool) so the full suite is fast and self-contained.
+
+INVARIANTE: las pruebas NUNCA tocan SQL Server / AWS. El engine de abajo está escrito a mano
+con `sqlite://` y NO lee `DB_BACKEND` ni `settings.sqlalchemy_url`, así que el `.env` del
+desarrollador es irrelevante: aunque apunte a `sqlserver`, pytest sigue en SQLite en memoria.
+Eso es deliberado y no debe cambiarse — ver la aserción al final de este bloque.
 """
 from __future__ import annotations
 
@@ -25,11 +30,33 @@ from app.models import Concept, Supplier, User  # noqa: E402
 from app.seed import seed_concepts, seed_users  # noqa: E402
 
 engine = create_engine(
+    # `sqlite://` sin ruta = base en MEMORIA. Con StaticPool todas las conexiones comparten la
+    # misma, que es lo que permite que el TestClient y las fixtures vean los mismos datos.
     "sqlite://",
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+# --- Salvaguarda: las pruebas SIEMPRE en SQLite en memoria -------------------
+# Las pruebas crean, mutan y borran datos sin piedad (`drop_all`/`create_all` en cada caso).
+# Si el engine llegara a apuntar a la instancia de SQL Server en AWS, borrarían la base OFICIAL
+# del proyecto, que además está COMPARTIDA con GRC-OIR. No es una hipótesis remota: basta con
+# que alguien "unifique" este engine con `settings.sqlalchemy_url` para que el `.env` local
+# decida contra qué corren las pruebas.
+#
+# Esta aserción convierte ese error en un fallo inmediato y explicado, en vez de un desastre
+# silencioso. Si algún día hace falta probar contra SQL Server, se hace en un archivo aparte y
+# con una base desechable; nunca reapuntando este engine.
+assert engine.url.drivername.startswith("sqlite"), (
+    f"Las pruebas deben correr en SQLite, no en {engine.url.drivername!r}. "
+    "Nunca apuntes el engine de pruebas a SQL Server/AWS: la instancia RDS es la base oficial "
+    "y está compartida."
+)
+assert engine.url.database in (None, "", ":memory:"), (
+    f"El engine de pruebas apunta al archivo {engine.url.database!r}; debe ser SQLite en "
+    "MEMORIA para no ensuciar ninguna base en disco."
+)
 
 
 # Standard seed credentials (see app/seed.py).

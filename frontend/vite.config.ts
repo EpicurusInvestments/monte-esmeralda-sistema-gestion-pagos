@@ -18,5 +18,8 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
+    // Solo las pruebas de `src/`. Los `*.spec.ts` de `e2e/` son de Playwright: si vitest los
+    // recogiera, intentaría ejecutarlos en jsdom y fallarían por el import de @playwright/test.
+    include: ["src/**/*.{test,spec}.{ts,tsx}"],
   },
 });

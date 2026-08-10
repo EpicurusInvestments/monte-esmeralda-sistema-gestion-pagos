@@ -116,6 +116,54 @@ npm test            # vitest
 
 ---
 
+## Entornos de base de datos
+
+Hay **dos** entornos y se eligen con `DB_BACKEND` en `backend/.env` (que **no se versiona**).
+
+| Para qué | `DB_BACKEND` | Base |
+| --- | --- | --- |
+| Desarrollo local | `sqlite` | Archivo `backend/monte_esmeralda.db` |
+| `pytest` | *(no aplica)* | **SQLite en memoria, siempre** |
+| Smoke e2e (Playwright) | `sqlite` | La SQLite local, sembrada |
+| **Base oficial** (producción y verificación de verdad) | `sqlserver` | **SQL Server en AWS RDS** (`MESistemaGestionPagos`) |
+
+- **`pytest` ignora el `.env` por completo.** `backend/tests/conftest.py` construye su propio
+  engine `sqlite://` (en memoria, con `StaticPool`) y **no** lee `DB_BACKEND` ni
+  `settings.sqlalchemy_url`. Aunque tu `.env` esté apuntando a AWS, las pruebas siguen en
+  SQLite. Hay dos aserciones en ese archivo que fallan de inmediato si alguien reapunta el
+  engine: las pruebas hacen `drop_all`/`create_all` en cada caso, y la instancia RDS es la base
+  oficial **y está compartida con GRC-OIR**.
+- **Los e2e también van contra SQLite.** Crean solicitudes, suben adjuntos y ejecutan
+  transiciones reales: se corren contra el backend local con `DB_BACKEND=sqlite` y sembrado,
+  **nunca** contra AWS.
+
+### Cambiar a la base oficial (SQL Server en AWS)
+
+Es el entorno para verificar contra los datos reales; no para desarrollar ni para probar.
+
+1. En `backend/.env`, pon `DB_BACKEND=sqlserver` y las variables de conexión (`DB_HOST`,
+   `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `ODBC_DRIVER`…). Requiere el
+   **ODBC Driver 18 for SQL Server** instalado.
+2. **Reinicia `uvicorn`.** El `.env` se lee **una sola vez, al arrancar**: `--reload` recarga el
+   código pero **no** las variables de entorno. Si no reinicias, seguirás hablando con SQLite y
+   creyendo que estás en AWS.
+3. Para volver a local, `DB_BACKEND=sqlite` y reinicia otra vez.
+
+Patrón recomendado para alternar sin editar a mano cada vez: mantén dos archivos —`.env` con la
+configuración que uses a diario y `.env.sqlserver` (o `.env.sqlite`) con la otra— y copia el que
+toque sobre `.env` antes de arrancar. Ninguno se versiona: ambos están cubiertos por
+`.gitignore`, y las credenciales reales viven solo ahí o en AWS Secrets Manager.
+
+> **Advertencias sobre la instancia de AWS**
+>
+> - **Nunca** corras `pytest` ni los e2e apuntando a ella.
+> - **Nunca** ejecutes migraciones destructivas (`alembic downgrade`, `drop_all`, borrados
+>   masivos): es la base oficial y está **compartida** con otro proyecto.
+> - Antes de un `alembic upgrade head` contra AWS, revisa la migración generada: Alembic
+>   autogenera `DROP` cuando el modelo y la base divergen.
+
+---
+
 ## Usuarios de prueba (semilla)
 
 | Rol             | Correo                          | Contraseña     |
@@ -198,11 +246,26 @@ Monta las pantallas reales con el router y los providers, con el cliente de API 
 lista y detalle de cada módulo, formularios (validación y payloads), acciones de flujo,
 filtros y los bloqueos por rol.
 
-### Frontend (Playwright) — smoke: **pendiente de reescritura**
+### Frontend (Playwright) — smoke end-to-end
 
-Los smoke tests end-to-end existían sobre el frontend heredado y **no se han reescrito** sobre
-el frontend Vite; se harán en un PR aparte (ver
-[`docs/BACKLOG.md`](docs/BACKLOG.md)). Hoy no hay comandos de Playwright que ejecutar.
+Requiere el **backend corriendo en `:8000` con `DB_BACKEND=sqlite` y sembrado** (los e2e crean
+datos reales; ver _Entornos de base de datos_). El servidor de Vite lo levanta Playwright solo si
+no lo tienes ya abierto.
+
+```bash
+cd frontend
+npx playwright install chromium   # solo la primera vez
+npm run test:e2e                  # chromium, headless
+npm run test:e2e:ui               # modo interactivo para depurar
+```
+
+Cubre: login/logout y credenciales inválidas; el camino feliz punta a punta cambiando de sesión
+(Admin de Campo captura → adjunta → envía; Supervisor asigna concepto hoja y aprueba; CFO aprueba,
+con la bitácora completa al final); RBAC (sin `user:manage` no hay Administración ni acceso por
+URL; Tesorería solo ve estados aprobados); y el panel de detalle redimensionable.
+
+Cada test **crea sus propios datos** con una descripción única por corrida, así que se pueden
+repetir sobre la misma base sin limpiar nada.
 
 ---
 
