@@ -90,8 +90,8 @@ export function SolicitudForm({
           {title}
         </h1>
         <p className="cat-sub" style={{ marginBottom: 20 }}>
-          La solicitud se guarda como <strong>borrador</strong>. El envío a revisión, los
-          adjuntos y los comentarios llegan en incrementos posteriores.
+          La solicitud se guarda como <strong>borrador</strong>. Desde su detalle se adjuntan los
+          documentos y se envía a revisión (hace falta al menos un adjunto).
         </p>
 
         {formError && (

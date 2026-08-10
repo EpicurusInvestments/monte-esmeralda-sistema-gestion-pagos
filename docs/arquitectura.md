@@ -59,6 +59,29 @@ Frontend (React/TS)  →  API (FastAPI routers)  →  Negocio (services)  →  D
 - **Consecuencias:** las migraciones evitan tipos exclusivos de un dialecto; se adapta la
   configuración de conexión (Frente 2). Instancia RDS compartida con GRC-OIR (otra base):
   cuidado con operaciones destructivas.
+- **Estrategia de entornos (ampliación al cerrar el Frente 3):** un solo interruptor,
+  `DB_BACKEND` en el `.env` local (no versionado), decide contra qué habla `uvicorn`:
+
+  | Uso | Base |
+  |---|---|
+  | Desarrollo local | SQLite en archivo (`backend/monte_esmeralda.db`) |
+  | `pytest` | **SQLite en memoria, siempre** — ignora el `.env` |
+  | Smoke e2e (Playwright) | La SQLite local, sembrada |
+  | Verificación «de verdad» y producción | **SQL Server en AWS RDS**, la base oficial |
+
+  Las **pruebas quedan fuera de ese interruptor a propósito**: `tests/conftest.py` construye su
+  propio engine `sqlite://` (memoria, `StaticPool`) y no lee `DB_BACKEND` ni
+  `settings.sqlalchemy_url`, así que ningún `.env` puede arrastrarlas a AWS. Dado que hacen
+  `drop_all`/`create_all` en cada caso y la instancia RDS es **oficial y compartida**, el
+  archivo lleva dos aserciones que fallan de inmediato si alguien reapunta ese engine (a SQL
+  Server o incluso a una SQLite **en archivo**). La alternativa —un único engine configurable—
+  se descartó justamente porque haría que el `.env` de cada quien decidiera dónde se borran
+  datos.
+
+  Consecuencia operativa a recordar: el `.env` se lee **al arrancar**, así que cambiar de
+  `DB_BACKEND` exige **reiniciar `uvicorn`** (`--reload` recarga el código, no el entorno). El
+  procedimiento completo está en el
+  [`README.md`](../README.md#entornos-de-base-de-datos).
 
 ### ADR-004 — PKs con tipo GUID portable
 - **Contexto:** se necesitan UUID como PK que funcionen igual en SQLite y SQL Server.

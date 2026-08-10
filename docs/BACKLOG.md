@@ -189,11 +189,11 @@
   las referencias que quedaban en `CLAUDE.md` (raíz y frontend), `docs/arquitectura.md`, el skill
   `frontend-react`, el comentario de procedencia de `shared/lib/auth.tsx` y el texto de la
   pantalla raíz.
-- **Reescribir los smoke tests de Playwright** sobre el frontend nuevo. Los del frontend
-  heredado se fueron con él (recuperables del historial de git como referencia de los flujos que
-  cubrían: login, captura + envío, bandeja de Supervisor, bandeja de CFO y bitácora en el
-  detalle). Hoy la cobertura de frontend es solo `vitest`, que monta las pantallas con el
-  cliente de API mockeado: falta el recorrido real contra el backend.
+- ~~**Reescribir los smoke tests de Playwright** sobre el frontend nuevo~~ — **hecho**:
+  `frontend/e2e/` con 9 smoke en chromium (login/logout y credenciales inválidas, camino feliz
+  punta a punta con cambio de sesión, RBAC y panel redimensionable). Se corren con
+  `npm run test:e2e` contra el backend local en `:8000` con `DB_BACKEND=sqlite` sembrado; crean
+  sus propios datos, así que son repetibles sin limpiar la base.
 - **Decidir la containerización** (`docker-compose.yml`). El archivo quedó del baseline: levanta
   PostgreSQL —retirado en el Frente 2— e intenta construir un frontend que no tiene
   `Dockerfile`, así que **hoy no levanta el sistema**; lleva un comentario de advertencia y el
