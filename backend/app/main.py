@@ -12,6 +12,7 @@ from .routers import (
     auth,
     comments,
     concepts,
+    roles_permissions,
     solicitudes,
     suppliers,
     users,
@@ -39,6 +40,7 @@ def create_app() -> FastAPI:
     app.include_router(attachments.router)
     app.include_router(comments.router)
     app.include_router(audit.router)
+    app.include_router(roles_permissions.router)
 
     @app.get("/health", tags=["health"])
     def health() -> dict[str, str]:

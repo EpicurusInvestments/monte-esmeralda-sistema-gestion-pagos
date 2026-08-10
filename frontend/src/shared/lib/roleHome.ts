@@ -2,8 +2,8 @@
  *
  * El mapa vive en `nav.ts` (`ROLE_HOME`, espejo de `permissions.py`). La intención por rol:
  *
- *   admin        → /admin                      (Administración)
- *   field_admin  → /solicitudes/nueva          (captura de solicitudes)
+ *   admin        → /administracion             (Administración de usuarios)
+ *   field_admin  → /solicitudes                (lista de solicitudes)
  *   supervisor   → /aprobaciones               (bandeja de revisión operativa)
  *   cfo          → /aprobaciones-financieras   (aprobación financiera)
  *   treasurer    → /solicitudes                (bandeja de tesorería: solo aprobadas)

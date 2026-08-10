@@ -47,11 +47,87 @@ incorrectas → **401** con `{"code": "AUTHENTICATION_ERROR", ...}`.
 
 ## Usuarios (`/users`) — solo Admin (`user:manage`)
 
-| Método | Ruta | Propósito |
-|---|---|---|
-| GET | `/users` | Listar usuarios |
-| POST | `/users` | Crear usuario (`email, full_name, role, password`) |
-| PATCH | `/users/{user_id}` | Actualizar (`full_name, role, is_active, password`) |
+| Método | Ruta | Propósito | Éxito |
+|---|---|---|---|
+| GET | `/users` | Listar usuarios (todos, ordenados por `full_name`) | 200 |
+| POST | `/users` | Crear usuario (`email, full_name, role, password`) | **201** |
+| PATCH | `/users/{user_id}` | Actualizar (`full_name?, role?, is_active?, password?`) | 200 |
+
+Los tres exigen `user:manage`; otro rol recibe **403** `PERMISSION_DENIED`. Las tres respuestas
+son `UserOut`: `{id, email, full_name, role, is_active, created_at, updated_at}` (el front lo
+tipa como `UserDetail`; `User` es la versión sin marcas de tiempo que usa la sesión).
+
+Comportamiento verificado contra el servidor (SQLite sembrado):
+
+- **El correo se normaliza a minúsculas** al crear (`Nueva.Persona@…` se guarda como
+  `nueva.persona@…`).
+- **Correo duplicado → 422** `{"code": "VALIDATION_ERROR", "message": "Ya existe un usuario con
+  ese correo."}`. El formulario lo detecta por `code`, no por el status, y lo monta sobre el
+  campo `email`.
+- **El correo NO es editable**: `UserUpdate` no lo incluye. El `PATCH` usa
+  `exclude_unset=True`, así que solo cambia lo que se envía.
+- **`password` vacío o ausente NO cambia la contraseña** (el router lo descarta). Comprobado:
+  tras un `PATCH` de nombre/rol/estado sin `password`, el login con la contraseña original
+  sigue devolviendo 200.
+- `GET /users` **no acepta filtros ni paginación**: la pantalla filtra y busca en cliente.
+- Un usuario con `is_active = false` no puede iniciar sesión: `POST /auth/login` responde
+  **401** `{"code": "AUTHENTICATION_ERROR", "message": "La cuenta está inactiva."}`.
+- No hay endpoint de borrado: dar de baja = `is_active = false`.
+- El backend **no impone longitud mínima de contraseña**; el mínimo de 8 caracteres es una
+  regla del formulario (ver la ficha del módulo).
+
+## Roles y permisos (`/roles-permissions`) — solo Admin (`user:manage`)
+
+| Método | Ruta | Propósito | Éxito |
+|---|---|---|---|
+| GET | `/roles-permissions` | Matriz legible de roles × capacidades | 200 |
+
+**Solo lectura, a propósito.** La matriz vive en el código
+(`services/permissions.py: ROLE_CAPABILITIES`), así que no hay nada que escribir: `POST`,
+`PATCH` y `DELETE` responden **405**. Habilitar la edición implica moverla a la base de datos
+(ver el BACKLOG).
+
+Respuesta (`RolesPermissionsOut`):
+
+```json
+{
+  "roles": [
+    {
+      "value": "supervisor",
+      "label": "Supervisor",
+      "note": null,
+      "capabilities": [
+        {
+          "code": "solicitud:view_all",
+          "label": "Ver todas las solicitudes",
+          "group": "Solicitudes de Pago"
+        }
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "code": "solicitud:create",
+      "label": "Capturar solicitudes",
+      "group": "Solicitudes de Pago"
+    }
+  ]
+}
+```
+
+- `roles` trae **los 8 roles en el orden del enum `Role`**, cada uno con las capacidades que
+  tiene hoy. `capabilities` (raíz) es el **catálogo completo** (17), para poder cruzar rol ×
+  capacidad y marcar las que faltan.
+- **Las etiquetas y la agrupación viven en el backend** (`app/labels.py`), no en el cliente: así
+  ningún consumidor reinventa el criterio ni describe el mismo permiso de dos formas.
+- **El orden es estable.** `ROLE_CAPABILITIES` usa `set` (sin orden), así que el endpoint ordena
+  las capacidades de cada rol según el catálogo; dos llamadas devuelven exactamente lo mismo.
+- `note` es opcional y explica matices que la matriz sola no comunica, porque no son capacidades
+  sino reglas de visibilidad de `permissions.can_view_solicitud`: hoy la traen Tesorería (solo ve
+  solicitudes ya revisadas) y Admin de Campo (solo las suyas).
+- Una capacidad agregada a `permissions.py` sin etiquetar se expone igual (con su código como
+  etiqueta y grupo «Sin clasificar») — nunca se oculta un permiso real —, y
+  `tests/test_roles_permissions.py` falla para que se etiquete.
 
 ## Proveedores (`/suppliers`)
 

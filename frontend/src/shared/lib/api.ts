@@ -10,11 +10,13 @@ import type {
   LoginResponse,
   RequestType,
   Role,
+  RolesPermissions,
   SolicitudDetail,
   SolicitudListItem,
   SolicitudStatus,
   Supplier,
   User,
+  UserDetail,
 } from "./types";
 
 const API_URL =
@@ -132,15 +134,24 @@ export const api = {
   me: () => request<User>("/auth/me"),
 
   // --- Users (admin) --------------------------------------------------------
-  listUsers: () => request<User[]>("/users"),
+  // Devuelven `UserDetail` (el `UserOut` completo, con created_at/updated_at): la pantalla
+  // de Administración muestra esas marcas de tiempo.
+  listUsers: () => request<UserDetail[]>("/users"),
   createUser: (body: {
     email: string;
     full_name: string;
     role: Role;
     password: string;
-  }) => request<User>("/users", { method: "POST", body }),
-  updateUser: (id: string, body: Partial<{ full_name: string; role: Role; is_active: boolean; password: string }>) =>
-    request<User>(`/users/${id}`, { method: "PATCH", body }),
+  }) => request<UserDetail>("/users", { method: "POST", body }),
+  // `password` vacío o ausente NO cambia la contraseña (lo resuelve el router del backend).
+  updateUser: (
+    id: string,
+    body: Partial<{ full_name: string; role: Role; is_active: boolean; password: string }>,
+  ) => request<UserDetail>(`/users/${id}`, { method: "PATCH", body }),
+
+  // --- Roles y permisos (admin, solo lectura) -------------------------------
+  // La matriz vive en código (`services/permissions.py`), así que no hay escritura.
+  getRolesPermissions: () => request<RolesPermissions>("/roles-permissions"),
 
   // --- Suppliers ------------------------------------------------------------
   listSuppliers: () => request<Supplier[]>("/suppliers"),

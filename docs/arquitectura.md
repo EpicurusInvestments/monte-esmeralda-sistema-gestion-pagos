@@ -177,6 +177,13 @@ Frontend (React/TS)  →  API (FastAPI routers)  →  Negocio (services)  →  D
     `["solicitudes","detalle",id]`: hacer las dos cosas dispara **refetches duplicados**. Se usa
     la clave más específica que corresponda al cambio — solo el detalle cuando lo que cambió no
     se ve en la lista (adjuntos, comentarios), y la raíz cuando sí (monto, estado, proveedor).
+  - **El RBAC de pantalla completa se resuelve con un guard, no dentro de la página.**
+    `RequireCapability can={<helper de nav.ts>}` envuelve el elemento de la ruta (hoy
+    `/administracion` con `canManageUsers`). Así la restricción se lee en el router —donde se
+    ve toda la superficie de la app— y no escondida en el cuerpo de un componente. Muestra un
+    mensaje en vez de redirigir: a esa URL solo llega quien la escribió a mano (la entrada del
+    sidebar ya está filtrada por rol), y un rebote sin explicación se lee como un error de la
+    app. Sigue siendo UX: el backend responde 403 igual.
   - **El tamaño de la interfaz se decide una vez, en el tema.** `theme.css` fija una escala
     (`--fs*`) y el alto de control (`--ctl-h`), y **alinea a PrimeReact** a ella en un bloque
     único. Hace falta porque la librería viene a 1rem = 16px y su modo *small* solo baja a

@@ -101,6 +101,8 @@ monte-esmeralda-sistema-gestion-pagos/
 │       ├── database.py        # engine/session + tipo GUID portable
 │       ├── deps.py            # dependencias (usuario actual, sesión)
 │       ├── enums.py           # Role, SolicitudStatus, RequestType, etc.
+│       ├── labels.py          # etiquetas legibles (es-MX) de roles y capacidades
+│       ├── catalog.py         # datos semilla del árbol de Conceptos
 │       ├── errors.py          # errores de dominio + handlers
 │       ├── security.py        # JWT + hashing bcrypt
 │       ├── seed.py            # datos semilla (usuarios, conceptos, etc.)
