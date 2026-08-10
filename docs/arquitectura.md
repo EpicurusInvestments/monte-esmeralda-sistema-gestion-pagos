@@ -40,9 +40,14 @@ Frontend (React/TS)  →  API (FastAPI routers)  →  Negocio (services)  →  D
 - **Decisión:** reconstruir el frontend en **Vite + React + TS + PrimeReact + TanStack
   Query + RHF + Zod** (Frente 3), dejando el backend intacto como API estable. Se reutilizan
   `api.ts`, `types.ts`, `labels.ts` y `nav.ts`.
-- **Consecuencias:** se descarta el frontend actual (y sus smoke tests, a reescribir); a
+- **Consecuencias:** se descarta el frontend anterior (y sus smoke tests, a reescribir); a
   cambio, un solo stack y sistema de diseño entre ambos proyectos. La vulnerabilidad de
   Next.js se resuelve de raíz al migrar.
+- **Estado (Frente 3 cerrado):** la migración terminó. Durante el frente, el frontend Next.js
+  se conservó en `legacy-frontend/` como referencia visual pantalla por pantalla; **esa carpeta
+  ya se retiró del repositorio** (su historial sigue disponible en git) y con ella salió la
+  vulnerabilidad de Next.js. Queda pendiente reescribir los smoke tests de Playwright sobre el
+  frontend nuevo (ver el BACKLOG).
 
 ### ADR-003 — SQLite en dev, SQL Server (AWS RDS) en prod, con un solo juego de migraciones
 - **Contexto:** el código venía apuntando a PostgreSQL; el estándar del equipo (y de
@@ -223,7 +228,9 @@ estrategia de ambientes/despliegue.
   `DATABASE_URL` de Postgres, y el `Dockerfile` instala `libpq-dev` en vez del ODBC
   Driver 18. Local usa venv+SQLite y prod usa RDS gestionado, así que Docker se
   adaptará en un incremento propio si se decide containerizar. `[[POR LLENAR: decisión]]`
-- **Al cerrar el Frente 3 (retiro de `legacy-frontend/`):** actualizar `README.md` —hoy
-  describe el arranque del frontend Next.js en `:3000`— al flujo del frontend Vite
-  (`:5173`, `VITE_API_URL`), y revisar la referencia a `localhost:3000` en
-  `docker-compose.yml` junto con la decisión de Docker de la línea anterior.
+- ~~**Al cerrar el Frente 3 (retiro de `legacy-frontend/`)**~~ — **hecho**: `legacy-frontend/`
+  salió del repositorio y el `README.md` describe el arranque real con Vite (`:5173`,
+  `VITE_API_URL`). El `docker-compose.yml` **se dejó como estaba a propósito** —sigue con
+  Postgres y con un servicio de frontend sin `Dockerfile`—, encabezado por un comentario que
+  advierte que hoy no levanta el sistema: retocarlo sin decidir la containerización sería
+  inventar un flujo que nadie usa. Se resuelve junto con la decisión de Docker de arriba.

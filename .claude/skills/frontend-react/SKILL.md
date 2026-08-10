@@ -7,8 +7,8 @@ description: >
   escribir o modificar frontend: pantallas, componentes, formularios, tablas, bandejas,
   panel de detalle, llamadas a la API, tipos, hooks o visibilidad por rol. Aplica el patrón
   lista + panel de detalle, forms full-screen, badges de estado y tipado estricto alineado
-  a la API. Nota: hasta que aterrice el Frente 3, el frontend vive en Next.js; estas reglas
-  rigen el frontend nuevo conforme se construye.
+  a la API. Nota: el frontend heredado (Next.js) se retiró al cerrar el Frente 3; estas reglas
+  rigen el frontend actual en `frontend/`.
 ---
 
 # Skill: frontend-react

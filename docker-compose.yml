@@ -1,3 +1,11 @@
+# DIFERIDO — este compose es del baseline heredado y HOY NO LEVANTA EL SISTEMA:
+#   · `db` es PostgreSQL, que ya se retiró (local usa SQLite y producción SQL Server en RDS;
+#     ver ADR-003 y ADR-010 en docs/arquitectura.md). El backend ya no trae psycopg2.
+#   · `frontend` construye ./frontend, que es un proyecto Vite SIN Dockerfile (el que había
+#     era del frontend Next.js, retirado al cerrar el Frente 3).
+# El camino soportado es la ejecución local (venv + SQLite + Vite): ver el README.
+# Containerizar es una decisión pendiente con su propio incremento; hasta entonces este
+# archivo se conserva solo como punto de partida.
 services:
   db:
     image: postgres:16-alpine
