@@ -41,6 +41,38 @@ export interface User {
   is_active: boolean;
 }
 
+/** `UserOut` completo, con las marcas de tiempo que devuelven `/users` y `/auth/me`.
+ *
+ * Se separa de `User` a propósito: la sesión y los permisos solo necesitan identidad y rol
+ * (`User`), y la ÚNICA pantalla que muestra alta/actualización es Administración de
+ * usuarios. Así el tipo de uso general no arrastra campos que casi nadie consume. */
+export interface UserDetail extends User {
+  created_at: string;
+  updated_at: string;
+}
+
+/** Una capacidad del sistema, tal como la nombra y agrupa el backend (`app/labels.py`). */
+export interface Capability {
+  code: string;
+  label: string;
+  group: string;
+}
+
+/** Un rol con las capacidades que tiene hoy. `note` explica matices que la matriz no dice
+ *  (p. ej. que Tesorería ve solo las solicitudes ya aprobadas). */
+export interface RolePermissions {
+  value: Role;
+  label: string;
+  capabilities: Capability[];
+  note: string | null;
+}
+
+/** Respuesta de `GET /roles-permissions`: los roles y el catálogo para cruzarlos. */
+export interface RolesPermissions {
+  roles: RolePermissions[];
+  capabilities: Capability[];
+}
+
 export interface ClearanceSummary {
   has_record: boolean;
   status: ClearanceStatus | null;

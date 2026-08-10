@@ -41,10 +41,88 @@
   `POST /solicitudes` con `net_amount="0"` (con `description=""` sí responde 422 correctamente).
   Fix pequeño (serializar los detalles de forma segura); afecta la robustez de la API para
   cualquier cliente, aunque el formulario actual valide antes de enviar.
-- **Notificaciones por correo en transiciones clave** (Paquete 2).
+- **Edición de la matriz de roles y permisos desde la UI** (módulo propio). Hoy
+  `ROLE_CAPABILITIES` (`services/permissions.py`) vive **en código** y es la fuente de verdad;
+  ya existe la **consulta** en solo lectura (`GET /roles-permissions`, visible en Administración
+  de usuarios). Cambiar quién puede qué exige hoy editar el archivo y desplegar.
+
+  Trabajo necesario:
+  1. **Modelo en BD** para la relación rol ↔ capacidad, con su **migración Alembic** (nunca
+     fuera de una migración) y el catálogo de capacidades como referencia.
+  2. **Sembrar la matriz actual** (los 8 roles × 17 capacidades de hoy) para que el
+     comportamiento no cambie al desplegar.
+  3. **`permissions.has_capability` lee de BD, con caché.** Hoy es una consulta en memoria en
+     cada petición y se ejecuta en todos los endpoints: sin caché, cada llamada pagaría una
+     consulta extra.
+  4. **Endpoints de escritura** sobre `/roles-permissions` (con `user:manage`, como la consulta).
+  5. **UI de edición**, sustituyendo la vista de solo consulta actual.
+
+  Salvaguardas (no opcionales):
+  - **Impedir que el Admin se quede sin `user:manage`** o se bloquee el acceso a sí mismo: hay
+    que garantizar que siempre exista al menos un rol —con al menos un usuario activo— capaz de
+    administrar. Se solapa con el ítem del auto-bloqueo del Admin, más abajo.
+  - **Auditar cada cambio** en `audit_events` (quién quitó o dio qué capacidad, y cuándo): es un
+    cambio de seguridad, de los que más importa poder reconstruir.
+  - **Validar contra el catálogo de capacidades**: solo se aceptan códigos existentes, para que
+    no entren permisos inventados que nadie valida.
+
+  Decisiones abiertas antes de implementar: ¿se pueden **crear roles nuevos** o solo reasignar
+  capacidades de los 8 actuales? ¿qué pasa con las **sesiones activas** de un rol al que se le
+  acaba de quitar una capacidad (aplica en la siguiente petición, o se invalida el token)?
+  `[[POR LLENAR: prioridad]]`
+- **Un Admin puede desactivarse o degradarse a sí mismo.** `PATCH /users/{id}` no protege la
+  última cuenta con `user:manage`: si el único Admin se pone `is_active = false` o se cambia de
+  rol, nadie puede volver a administrar usuarios (tampoco hay endpoint para recuperarlo; habría
+  que tocar la base). Ver la ficha de
+  [`modulos/administracion-usuarios.md`](modulos/administracion-usuarios.md).
+- **Sin política de contraseñas ni autoservicio.** El backend acepta cualquier longitud (el
+  mínimo de 8 lo pone hoy el formulario), no hay expiración ni bloqueo por intentos fallidos, y
+  un usuario no puede cambiar su propia contraseña: depende del Admin.
+- **Servicio de notificaciones por correo** (Paquete 2). Avisar por correo a los implicados en
+  **cada cambio de estado** de una Solicitud, a lo largo de todo el tren de etapas, para que el
+  flujo no dependa de que alguien entre a revisar su bandeja.
+
+  Quién recibe qué (los estados son los exactos de `SolicitudStatus`):
+
+  | Transición | Se notifica a | Por qué |
+  |---|---|---|
+  | → `submitted` (envío o reenvío tras corrección) | **Supervisor** | Tiene algo que revisar y aprobar |
+  | → `supervisor_approved` | **CFO** | Le toca la revisión financiera |
+  | → `correction_requested` (desde Supervisor o CFO) | **Capturista** (`captured_by`, típicamente Admin de Campo) | Su solicitud volvió a editable y hay que corregirla y reenviarla |
+  | → `rejected` | **Capturista** | Cierre negativo, terminal |
+  | → `deferred` (lo difiere el CFO) | **Capturista** | Queda en espera, no rechazada |
+  | → `cfo_approved` | **Capturista** y **Tesorería** | Listo para pago: es cuando Tesorería la ve |
+  | → `cancelled` | Implicados hasta ese punto | Cierre por decisión del dueño/Admin |
+
+  **Dónde se dispara:** en `services/workflow.py`, que ya es la única puerta de los cambios de
+  estado — cada transición ya valida permisos y escribe en `audit_events`, así que el aviso es
+  un paso más del mismo lugar y ninguna ruta puede olvidarse de notificar. El envío en sí va
+  **detrás de una capa desacoplada** (SMTP o proveedor de correo) con plantillas, mismo criterio
+  que `services/storage.py` para adjuntos: el dominio pide «notifica este evento» y no sabe cómo
+  se manda. Conviene que el envío no bloquee ni pueda tumbar la transición (cola o, como mínimo,
+  fallo silencioso registrado): un correo caído no debe impedir aprobar un pago.
+
+  **Requiere definir antes de implementar:** (a) proveedor de correo y credenciales (por
+  `.env` / AWS Secrets Manager, nunca en el repo); (b) plantillas por evento, en español y con
+  el folio, monto, proveedor y quién actuó; (c) **destinatarios por transición** — hoy solo se
+  conoce el capturista (`captured_by`); Supervisor, CFO y Tesorería son *roles*, así que hay que
+  decidir si se notifica a todos los usuarios activos con ese rol, a una lista configurable o a
+  un buzón por área. `[[POR LLENAR: proveedor, plantillas y destinatarios]]`
+
+- **Diseñar el servicio de correo como genérico desde el inicio** (Paquete 2). Las
+  notificaciones del flujo no serán su único uso: también hace falta para el **alta de usuarios**
+  (bienvenida con sus credenciales o un enlace para fijar la contraseña — hoy el Admin la teclea
+  y la comunica por fuera, ver
+  [`modulos/administracion-usuarios.md`](modulos/administracion-usuarios.md)), el
+  **restablecimiento de contraseña** y avisos futuros (vencimiento de cumplimiento de un
+  proveedor, recordatorios de pendientes). Si la capa de envío nace atada al vocabulario de las
+  Solicitudes, esos casos obligarían a rehacerla.
 
 ## Frontend
 
+- **Perfil propio / cambiar mi contraseña.** Con Administración de usuarios montada, el Admin
+  puede restablecer contraseñas de otros, pero nadie puede cambiar la suya. Requiere un endpoint
+  nuevo (el `PATCH /users/{id}` exige `user:manage`).
 - **Home (`/`) → Dashboard principal.** Hoy es un placeholder («Frontend en migración»). A
   futuro (**Paquete 2**) será un dashboard con métricas, paneles y gráficos interactivos
   (evaluar **Recharts** o **Chart.js**). Requiere datos de tesorería / flujo de efectivo para

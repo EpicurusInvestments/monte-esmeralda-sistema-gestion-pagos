@@ -49,12 +49,12 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   { href: "/conceptos", label: "Catálogo de Conceptos", roles: ALL },
-  { href: "/admin", label: "Administración", roles: ["admin"] },
+  { href: "/administracion", label: "Administración", roles: ["admin"] },
 ];
 
 // Landing page per role (Role Home redirect).
 export const ROLE_HOME: Record<Role, string> = {
-  admin: "/admin",
+  admin: "/administracion",
   // El Admin de Campo aterriza en la LISTA, no en el formulario en blanco: al entrar suele
   // querer ver el estado de lo que capturó. "Capturar Solicitud" sigue a un clic en el menú.
   field_admin: "/solicitudes",
@@ -91,6 +91,12 @@ export function canEditConcepts(role: Role): boolean {
 }
 
 export function canRecordClearance(role: Role): boolean {
+  return role === "admin";
+}
+
+/** Capacidad `user:manage` (alta/edición de usuarios). En el backend la tiene SOLO `admin`
+ *  (`permissions.USER_MANAGE`), y los tres endpoints de `/users` la exigen. */
+export function canManageUsers(role: Role): boolean {
   return role === "admin";
 }
 

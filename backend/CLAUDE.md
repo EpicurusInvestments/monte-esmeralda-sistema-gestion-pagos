@@ -35,6 +35,8 @@ app/
 ├── database.py     # engine/session, Base, tipo GUID portable, get_db
 ├── deps.py         # dependencias: get_current_user (JWT), require_capability(cap)
 ├── enums.py        # Role, SolicitudStatus, RequestType, ClearanceStatus, AuditAction
+├── labels.py       # etiquetas legibles (es-MX) de roles y capacidades — las consume la UI
+├── catalog.py      # datos semilla del árbol de Conceptos
 ├── errors.py       # errores de dominio + handlers uniformes
 ├── security.py     # JWT (encode/decode) + hashing bcrypt
 ├── seed.py         # datos semilla
