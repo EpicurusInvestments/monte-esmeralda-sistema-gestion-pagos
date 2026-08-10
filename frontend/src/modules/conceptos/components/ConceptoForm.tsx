@@ -188,7 +188,7 @@ export function ConceptoForm({
                 checked={field.value}
                 onChange={(e) => field.onChange(!!e.checked)}
               />
-              <label htmlFor="is_header" style={{ fontSize: 13, cursor: "pointer" }}>
+              <label htmlFor="is_header" className="cb-label">
                 Es encabezado — agrupador, no asignable
               </label>
             </div>
@@ -205,7 +205,7 @@ export function ConceptoForm({
                 checked={field.value}
                 onChange={(e) => field.onChange(!!e.checked)}
               />
-              <label htmlFor="active" style={{ fontSize: 13, cursor: "pointer" }}>
+              <label htmlFor="active" className="cb-label">
                 Activo
               </label>
             </div>

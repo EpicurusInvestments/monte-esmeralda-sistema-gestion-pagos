@@ -125,6 +125,18 @@ function panelDetalle() {
   return within(el as HTMLElement);
 }
 
+
+/** Abre un Dropdown de PrimeReact por su nombre accesible.
+ *
+ * `aria-label` termina en un input oculto (`.p-hidden-accessible`) que NO abre el panel:
+ * hay que hacer click en la raíz `.p-dropdown`.
+ */
+function abrirDropdown(label: string) {
+  const raiz = screen.getByLabelText(label).closest(".p-dropdown");
+  if (!raiz) throw new Error(`No se encontró el Dropdown "${label}"`);
+  fireEvent.click(raiz);
+}
+
 beforeEach(() => {
   vi.mocked(getToken).mockReturnValue(null);
   vi.mocked(api.me).mockReset();
@@ -153,6 +165,11 @@ test("la lista renderiza una fila por concepto", async () => {
 
   // Por defecto pide solo activos.
   expect(api.listConcepts).toHaveBeenCalledWith({ activeOnly: true });
+
+  // La lista va en modo compacto de PrimeReact: el padding de celda sale de esa clase (el
+  // tamaño de fuente lo fija el tema). Si alguien quita `size="small"`, las filas se
+  // vuelven a inflar.
+  expect(document.querySelector(".p-datatable")?.className).toContain("p-datatable-sm");
 });
 
 test("seleccionar una fila abre el panel de detalle", async () => {
@@ -219,16 +236,40 @@ test("la búsqueda filtra localmente por código o nombre", async () => {
   expect(screen.getByText("1 de 3")).toBeTruthy();
 });
 
-test("el toggle 'Todos' vuelve a consultar con activeOnly=false", async () => {
+test("el filtro de estado 'todos' vuelve a consultar con activeOnly=false", async () => {
   sesion(ADMIN);
   renderApp("/conceptos");
 
   await screen.findByText("EGR-100");
-  fireEvent.click(screen.getByRole("button", { name: "Todos" }));
+  abrirDropdown("Filtrar por estado");
+  fireEvent.click(await screen.findByText("Estado: todos"));
 
   await waitFor(() => {
     expect(api.listConcepts).toHaveBeenCalledWith({ activeOnly: false });
   });
+});
+
+test("el filtro 'inactivos' trae todos y deja solo los inactivos", async () => {
+  // El backend no tiene "solo inactivos": se pide activeOnly=false y se filtra en cliente.
+  vi.mocked(api.listConcepts).mockResolvedValue([
+    ...CONCEPTOS,
+    concepto({ id: "c-4", code: "EGR-900", name: "Obsoleto", active: false }),
+  ]);
+  sesion(ADMIN);
+  renderApp("/conceptos");
+
+  await screen.findByText("EGR-100");
+  abrirDropdown("Filtrar por estado");
+  fireEvent.click(await screen.findByText("Estado: inactivos"));
+
+  await waitFor(() => {
+    expect(api.listConcepts).toHaveBeenCalledWith({ activeOnly: false });
+  });
+  await waitFor(() => {
+    expect(screen.queryByText("Edificación")).toBeNull();
+  });
+  expect(screen.getByText("Obsoleto")).toBeTruthy();
+  expect(screen.getByText("1 de 4")).toBeTruthy();
 });
 
 test("el sidebar enlaza Conceptos y lo marca activo en su ruta", async () => {

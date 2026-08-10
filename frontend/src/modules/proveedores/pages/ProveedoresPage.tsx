@@ -9,11 +9,14 @@
 
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
+import { Dropdown } from "primereact/dropdown";
 import { useMemo, useState } from "react";
 
 import { useAuth } from "@/shared/lib/auth";
+import { useResizableDetail } from "@/shared/lib/useResizableDetail";
 import { canManageSuppliers, canRecordClearance } from "@/shared/lib/nav";
 import { Badge } from "@/shared/ui/Badge";
+import { DetailResizeHandle } from "@/shared/ui/DetailResizeHandle";
 
 import { labelCumplimiento, toneCumplimiento } from "../clearance";
 import { ProveedorDetailPanel } from "../components/ProveedorDetailPanel";
@@ -23,7 +26,20 @@ import { EFFECTIVE_STATUS_FILTERS, vacioANull } from "../types";
 import type { ProveedorFormValues, Supplier } from "../types";
 
 type Modo = "view" | "new" | "edit";
-type FiltroEstado = "activos" | "todos";
+/** `GET /suppliers` no acepta filtros: siempre trae todos y se filtra en cliente, así que
+ *  "Inactivos" sale sin tocar el backend. */
+type FiltroEstado = "activos" | "inactivos" | "todos";
+
+const ESTADO_OPTIONS: { value: FiltroEstado; label: string }[] = [
+  { value: "activos", label: "Estado: activos" },
+  { value: "inactivos", label: "Estado: inactivos" },
+  { value: "todos", label: "Estado: todos" },
+];
+
+const CUMPLIMIENTO_OPTIONS = EFFECTIVE_STATUS_FILTERS.map((f) => ({
+  value: f.value as string,
+  label: f.label,
+}));
 
 /** Form → payload del backend: los opcionales vacíos viajan como null. */
 function aPayload(data: ProveedorFormValues): Partial<Supplier> {
@@ -50,6 +66,7 @@ export function ProveedoresPage() {
   const [cumplimiento, setCumplimiento] = useState<string | null>(null);
   const [selected, setSelected] = useState<Supplier | null>(null);
   const [modo, setModo] = useState<Modo>("view");
+  const detalleAncho = useResizableDetail();
 
   const lista = useProveedores();
   const crear = useCreateProveedor();
@@ -61,6 +78,7 @@ export function ProveedoresPage() {
     const texto = q.trim().toLowerCase();
     return proveedores.filter((p) => {
       if (estado === "activos" && p.status !== "active") return false;
+      if (estado === "inactivos" && p.status !== "inactive") return false;
       if (cumplimiento && p.clearance.effective_status !== cumplimiento) return false;
       if (!texto) return true;
       return (
@@ -140,7 +158,7 @@ export function ProveedoresPage() {
     <div>
       <div>{p.contact_name ?? "—"}</div>
       {p.email && (
-        <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 2 }}>{p.email}</div>
+        <div className="td-sub">{p.email}</div>
       )}
     </div>
   );
@@ -179,46 +197,30 @@ export function ProveedoresPage() {
           onChange={(e) => setQ(e.target.value)}
         />
 
-        <span className="tb-label">Estado</span>
-        <button
-          type="button"
-          className={`fp${estado === "activos" ? " active" : ""}`}
-          onClick={() => {
-            setEstado("activos");
+        <Dropdown
+          aria-label="Filtrar por estado"
+          options={ESTADO_OPTIONS}
+          optionLabel="label"
+          optionValue="value"
+          style={{ minWidth: 160 }}
+          value={estado}
+          onChange={(e) => {
+            setEstado((e.value as FiltroEstado | null) ?? "activos");
             reset();
           }}
-        >
-          Activos
-        </button>
-        <button
-          type="button"
-          className={`fp${estado === "todos" ? " active" : ""}`}
-          onClick={() => {
-            setEstado("todos");
-            reset();
-          }}
-        >
-          Todos
-        </button>
+        />
 
-        <span className="tb-label">Cumplimiento</span>
-        <button
-          type="button"
-          className={`fp${cumplimiento === null ? " active" : ""}`}
-          onClick={() => setCumplimiento(null)}
-        >
-          Cualquiera
-        </button>
-        {EFFECTIVE_STATUS_FILTERS.map((f) => (
-          <button
-            key={f.value}
-            type="button"
-            className={`fp${cumplimiento === f.value ? " active" : ""}`}
-            onClick={() => setCumplimiento(f.value)}
-          >
-            {f.label}
-          </button>
-        ))}
+        <Dropdown
+          aria-label="Filtrar por cumplimiento"
+          options={CUMPLIMIENTO_OPTIONS}
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Cumplimiento: cualquiera"
+          showClear
+          style={{ minWidth: 220 }}
+          value={cumplimiento}
+          onChange={(e) => setCumplimiento((e.value as string | null) ?? null)}
+        />
 
         <span className="tb-spacer" />
         <span className="tb-count">
@@ -284,7 +286,10 @@ export function ProveedoresPage() {
           )}
         </div>
 
-        <aside className="detail-pane">{detalle}</aside>
+        <DetailResizeHandle {...detalleAncho.handleProps} />
+        <aside className="detail-pane" style={{ width: detalleAncho.width }}>
+          {detalle}
+        </aside>
       </div>
     </>
   );

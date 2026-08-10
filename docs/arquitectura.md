@@ -177,6 +177,24 @@ Frontend (React/TS)  →  API (FastAPI routers)  →  Negocio (services)  →  D
     `["solicitudes","detalle",id]`: hacer las dos cosas dispara **refetches duplicados**. Se usa
     la clave más específica que corresponda al cambio — solo el detalle cuando lo que cambió no
     se ve en la lista (adjuntos, comentarios), y la raíz cuando sí (monto, estado, proveedor).
+  - **El tamaño de la interfaz se decide una vez, en el tema.** `theme.css` fija una escala
+    (`--fs*`) y el alto de control (`--ctl-h`), y **alinea a PrimeReact** a ella en un bloque
+    único. Hace falta porque la librería viene a 1rem = 16px y su modo *small* solo baja a
+    14px con ~42px de alto: no llega a la referencia del patrón (buscador y columna de folio,
+    13px / 34px). En particular `p-datatable-sm` recorta el **padding** pero no la fuente, así
+    que las columnas sin clase propia se veían más grandes que las de folio/código. Repartir
+    clases `-sm` control por control habría dejado tres tamaños distintos y no cubriría las
+    pantallas que se monten después; hacerlo en el tema sí. También el alto del header sale de
+    un token (`--logo-h`), del que se derivan `--header-h` y la posición del Toast.
+  - **Los retoques de UX se resuelven en el patrón, no en la pantalla.** Dos ejemplos: los
+    filtros de todas las toolbars son `Dropdown` con la etiqueta dentro de la opción
+    (“Estado: activos”), en vez de píldoras que crecen sin control; y el ancho del panel de
+    detalle se ajusta arrastrando su borde izquierdo con un hook compartido
+    (`useResizableDetail` + `DetailResizeHandle`), no con una solución por pantalla. El rango
+    va del ancho por defecto del tema (`--detail-width`) a +200px —nunca más angosto, porque
+    los formularios del detalle no caben— y la preferencia se guarda en `localStorage`
+    (`me.detailPaneWidth`) compartida por Conceptos, Proveedores y las bandejas de
+    Solicitudes: es una preferencia de espacio de trabajo, no de una pantalla.
 - **Consecuencias:** migrar una pantalla es un cambio acotado y repetible — método(s) en el
   cliente central, carpeta del módulo, ruta hija en `router.tsx` y una línea en
   `mountedRoutes.ts`. El sidebar y la redirección por rol se habilitan solos. A cambio, el

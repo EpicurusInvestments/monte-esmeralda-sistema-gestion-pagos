@@ -58,15 +58,18 @@ Detalle en [`docs/API-CONTRACT.md`](../API-CONTRACT.md#conceptos-concepts).
 | Zona | Contenido |
 |---|---|
 | Encabezado | Título y, solo con `concept:edit`, botón **“+ Nuevo concepto”** |
-| Toolbar | Búsqueda local por código o nombre · filtro por sección (ING/EGR/GAS/ACT/Todas) · toggle **Solo activos / Todos** · contador de resultados |
+| Toolbar | Búsqueda local por código o nombre · `Dropdown` de **sección** (ING/EGR/GAS/ACT, con “limpiar”) · `Dropdown` de **estado** (Activos / Inactivos / Todos) · contador de resultados |
 | Lista | `DataTable` de PrimeReact: código (mono), nombre con su `path` como sublínea, sección, tipo (badge Encabezado/Hoja) y estado (badge Activo/Inactivo) |
-| Panel derecho | Detalle del concepto seleccionado; con `concept:edit`, botón **“Editar”**. Sin selección muestra el estado vacío |
+| Panel derecho | Detalle del concepto seleccionado; con `concept:edit`, botón **“Editar”**. Sin selección muestra el estado vacío. Su **ancho se ajusta** arrastrando el borde izquierdo (ver ADR-011) |
 | Formulario | Alta/edición en el mismo panel (RHF + Zod): código, nombre, sección, padre, “es encabezado”, activo y orden |
 
 Notas de comportamiento:
 
-- La **búsqueda y el filtro por sección son locales** sobre lo ya traído; el toggle
-  **Solo activos / Todos** sí reconsulta al backend (`active_only`).
+- La **búsqueda y el filtro por sección son locales** sobre lo ya traído; el filtro de
+  **estado** sí toca la consulta (`active_only`).
+- El backend solo expone `active_only` (true = solo activos; false = todos): **no existe un
+  “solo inactivos”**. La opción **Inactivos** pide `active_only=false` y descarta en cliente
+  los que tienen `active = true`.
 - El **código duplicado** se muestra sobre el campo `code` sin perder lo capturado. El
   frontend lo detecta por `code === "VALIDATION_ERROR"`, no por el status.
 - Roles **sin `concept:edit` ven la pantalla en solo lectura**: no se pintan “+ Nuevo

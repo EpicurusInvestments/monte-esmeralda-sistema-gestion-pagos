@@ -257,6 +257,11 @@ test("la lista renderiza una fila por solicitud, con folio, monto y estado", asy
     date_from: undefined,
     date_to: undefined,
   });
+
+  // La lista va en modo compacto de PrimeReact: el padding de celda sale de esa clase (el
+  // tamaño de fuente lo fija el tema). Si alguien quita `size="small"`, las filas se
+  // vuelven a inflar.
+  expect(document.querySelector(".p-datatable")?.className).toContain("p-datatable-sm");
 });
 
 test("seleccionar una fila abre el detalle con su badge de estado", async () => {

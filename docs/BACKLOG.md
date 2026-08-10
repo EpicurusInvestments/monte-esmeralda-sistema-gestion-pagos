@@ -45,9 +45,13 @@
 
 ## Frontend
 
-- **Interceptor 401 → logout automático.** Hoy un token expirado solo se detecta al arrancar
-  (`/auth/me`); un 401 en una llamada posterior no cierra la sesión. Cobra importancia cuando
-  haya pantallas consumiendo datos de forma continua.
+- **Home (`/`) → Dashboard principal.** Hoy es un placeholder («Frontend en migración»). A
+  futuro (**Paquete 2**) será un dashboard con métricas, paneles y gráficos interactivos
+  (evaluar **Recharts** o **Chart.js**). Requiere datos de tesorería / flujo de efectivo para
+  ser útil, así que depende del alcance del Paquete 2.
+- ~~**Interceptor 401 → logout automático**~~ — **hecho** en la parte 2 de Solicitudes: el
+  cliente central expone `setOnUnauthorized` y `AuthProvider` cierra la sesión ante cualquier
+  401 de una llamada autenticada (el login queda excluido, va con `auth: false`).
 - **Usar `state.from` del guard** para devolver al usuario al destino original después del
   login. El guard ya lo guarda; nadie lo lee todavía.
 - **`TreeTable` para la jerarquía de Conceptos** (plegar/desplegar) y **orden por columna** en
@@ -58,8 +62,12 @@
   `supplier:view` pero `/proveedores` no aparece en su menú, así que llega solo por URL.
 - **Extender la alineación de PrimeReact al tema** conforme entren más componentes. El tema
   `lara-light-indigo` trae su indigo escrito a mano en decenas de reglas, así que `theme.css`
-  solo realinea los componentes ya usados (Button, InputText, Password). Alternativa de fondo:
-  compilar un tema propio de PrimeReact.
+  solo realinea los componentes ya usados (color: Button, InputText, Password; tamaño:
+  DataTable, InputText, Dropdown, Calendar, Button). Alternativa de fondo: compilar un tema
+  propio de PrimeReact.
+- **Variante horizontal del logotipo.** El archivo actual (697×314) es el logo con el nombre
+  en dos líneas; el header lo muestra a 80px de alto. Una variante apaisada permitiría el
+  mismo peso visual con un header más bajo, que en una app de listas densas es espacio útil.
 - **Actualización optimista de las acciones de flujo.** Hoy cada transición espera la
   respuesta y luego refetchea (los botones se deshabilitan mientras tanto). Con optimismo se
   sentiría instantáneo, a cambio de manejar el rollback si el backend rechaza. Mejora
